@@ -16,7 +16,7 @@ type Student = {
 export default function ClassGroupStudentsPage() {
   const { id: schoolId, groupId } = useParams();
   const [classStudents, setClassStudents] = useState<Student[]>([]);
-  const [allStudents, setAllStudents] = useState<Student[]>([]);
+  const [availableStudents, setAvailableStudents] = useState<Student[]>([]);
   const [selectedId, setSelectedId] = useState<number | "">("");
   const [errors, setErrors] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
@@ -24,17 +24,17 @@ export default function ClassGroupStudentsPage() {
   const load = () => {
     setLoading(true);
     Promise.all([
-      api.get<Student[]>(`/schools/${schoolId}/students`),
+      api.get<Student[]>(`/schools/${schoolId}/students/without-class-group`),
       api.get<Student[]>(
         `/schools/${schoolId}/classgroups/${groupId}/students`
       ),
     ])
-      .then(([allRes, classRes]) => {
-        setAllStudents(allRes.data);
+      .then(([unassignedRes, classRes]) => {
+        setAvailableStudents(unassignedRes.data);
         setClassStudents(classRes.data);
       })
       .catch(() => {
-        setAllStudents([]);
+        setAvailableStudents([]);
         setClassStudents([]);
       })
       .finally(() => setLoading(false));
@@ -84,6 +84,7 @@ export default function ClassGroupStudentsPage() {
         <h5 className="mb-0">Class Group Students</h5>
       </div>
 
+      {/* Add student */}
       <div className="mb-3 d-flex gap-2">
         <select
           className="form-select"
@@ -91,13 +92,11 @@ export default function ClassGroupStudentsPage() {
           onChange={(e) => setSelectedId(Number(e.target.value))}
         >
           <option value="">-- Select student to add --</option>
-          {allStudents
-            .filter((s) => !classStudents.some((cs) => cs.id === s.id))
-            .map((s) => (
-              <option key={s.id} value={s.id}>
-                {studentName(s)}
-              </option>
-            ))}
+          {availableStudents.map((s) => (
+            <option key={s.id} value={s.id}>
+              {studentName(s)}
+            </option>
+          ))}
         </select>
         <button
           className="btn btn-primary"
@@ -110,6 +109,7 @@ export default function ClassGroupStudentsPage() {
 
       <ValidationErrorList messages={errors} />
 
+      {/* Current class students */}
       {loading ? (
         <p>Loading...</p>
       ) : classStudents.length === 0 ? (
