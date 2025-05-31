@@ -41,13 +41,17 @@ export default function AdminsPage() {
   const [adminToDelete, setAdminToDelete] = useState<SchoolAdmin | null>(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
 
+  const compareAdmins = (a: SchoolAdmin, b: SchoolAdmin) =>
+    a.user.lastName.localeCompare(b.user.lastName) ||
+    a.user.firstName.localeCompare(b.user.firstName);
+
   const loadAdmins = async () => {
     setLoading(true);
     try {
       const res = await api.get<SchoolAdmin[]>(
         `/schools/${schoolId}/schooladmins`
       );
-      setAdmins(res.data);
+      setAdmins(res.data.sort(compareAdmins));
     } catch {
       setAdmins([]);
     } finally {
@@ -88,11 +92,13 @@ export default function AdminsPage() {
     if (!adminToDelete || !schoolId) return;
     try {
       await api.delete(`/schools/${schoolId}/schooladmins/${adminToDelete.id}`);
-      setShowDeleteModal(false);
-      setAdminToDelete(null);
-      loadAdmins();
+      // remove from local state
+      setAdmins((curr) => curr.filter((a) => a.id !== adminToDelete.id));
     } catch {
       // Optional: show error toast
+    } finally {
+      setShowDeleteModal(false);
+      setAdminToDelete(null);
     }
   };
 
@@ -118,25 +124,61 @@ export default function AdminsPage() {
 
     try {
       if (editingAdmin?.id) {
+        // — EDIT —
         await api.put(
           `/schools/${schoolId}/schooladmins/${editingAdmin.id}`,
           dto
         );
+
+        // find the original and merge in your updated values
+        const original = admins.find((a) => a.id === editingAdmin.id)!;
+        const updated: SchoolAdmin = {
+          ...original,
+          user: {
+            ...original.user,
+            firstName: dto.user.firstName,
+            middleName: (dto.user as any).middleName,
+            lastName: dto.user.lastName,
+            sex: dto.user.sex,
+          },
+        };
+
+        // replace in the list
+        setAdmins((curr) =>
+          curr
+            .map((a) => (a.id === updated.id ? updated : a))
+            .sort(compareAdmins)
+        );
+
         setFormOpen(false);
       } else {
-        const res = await api.post(`/schools/${schoolId}/schooladmins`, dto);
-        setFormOpen(false);
+        // — CREATE —
+        const res = await api.post<{
+          id: number;
+          username: string;
+          password: string;
+          user: SchoolAdmin["user"];
+        }>(`/schools/${schoolId}/schooladmins`, dto);
+
+        // pull credentials & new admin data out of the response
         setCreatedCredentials({
           username: res.data.username,
           password: res.data.password,
         });
+
+        const created: SchoolAdmin = {
+          id: res.data.id,
+          user: res.data.user,
+        };
+
+        // prepend to the list
+        setAdmins((curr) => [created, ...curr].sort(compareAdmins));
+        setFormOpen(false);
       }
-      loadAdmins();
     } catch (err: any) {
       const errors = err?.response?.data?.errors;
       if (errors && typeof errors === "object") {
-        const all = Object.values(errors).flat() as string[];
-        setValidationErrors(all);
+        setValidationErrors(Object.values(errors).flat() as string[]);
       } else {
         setValidationErrors(["Failed to save admin."]);
       }

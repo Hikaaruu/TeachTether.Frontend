@@ -1,11 +1,5 @@
 // File: pages/messages/ThreadMessagesPage.tsx
-import {
-  useEffect,
-  useLayoutEffect,
-  useRef,
-  useState,
-  useCallback,
-} from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { useParams } from "react-router-dom";
 import dayjs from "dayjs";
 import { api } from "../api/client";
@@ -70,7 +64,7 @@ export default function ThreadMessagesPage() {
 
   /* ---------- refs ---------- */
   const listRef = useRef<HTMLDivElement>(null);
-  const isPrepending = useRef(false); // block auto-scroll during prepend
+  const didInitialScroll = useRef(false);
 
   /* ---------- helpers ---------- */
   const scrollToBottom = useCallback((smooth = false) => {
@@ -87,6 +81,8 @@ export default function ThreadMessagesPage() {
     if (!el) return true;
     return el.scrollHeight - el.scrollTop - el.clientHeight < 120;
   };
+
+  /** Scroll only if the reader is already near the bottom */
 
   /* ---------- companion fetch ---------- */
   useEffect(() => {
@@ -124,6 +120,8 @@ export default function ThreadMessagesPage() {
 
     // new msg
     connection.on("ReceiveMessage", (msg: Message) => {
+      const shouldStick = msg.senderUserId === currentUserId || nearBottom();
+
       setMessages((prev) => [...prev, msg]);
 
       if (msg.senderUserId !== currentUserId) {
@@ -136,7 +134,9 @@ export default function ThreadMessagesPage() {
         );
       }
 
-      if (nearBottom()) scrollToBottom(true);
+      if (shouldStick) {
+        setTimeout(() => scrollToBottom(false), 5);
+      }
     });
 
     // read ack
@@ -146,10 +146,14 @@ export default function ThreadMessagesPage() {
       )
     );
 
-    // 🆕 delete ack ---------------------------------------------------------
-    connection.on("MessageDeleted", (id: number) =>
-      setMessages((p) => p.filter((m) => m.id !== id))
-    );
+    // delete ack ---------------------------------------------------------
+    connection.on("MessageDeleted", (id: number) => {
+      const atBottom = nearBottom(); // ⇢ add
+      setMessages((prev) => prev.filter((m) => m.id !== id)); // (unchanged)
+      if (atBottom) {
+        requestAnimationFrame(() => scrollToBottom(false)); // after paint
+      }
+    });
     // ---------------------------------------------------------------------
 
     return () => void connection.stop();
@@ -198,6 +202,14 @@ export default function ThreadMessagesPage() {
     })();
   }, [threadId, currentUserId]);
 
+  /* ---------- scroll once after first batch ---------- */
+  useEffect(() => {
+    if (!loading && !didInitialScroll.current) {
+      scrollToBottom(false);
+      didInitialScroll.current = true; // remember we’ve done it
+    }
+  }, [loading, scrollToBottom]);
+
   /* ---------- prepend older ---------- */
   useEffect(() => {
     const el = listRef.current;
@@ -208,7 +220,6 @@ export default function ThreadMessagesPage() {
 
       loadingMoreRef.current = true;
       setLoadingMore(true);
-      isPrepending.current = true;
 
       const beforeId = messages[0]?.id;
       if (!beforeId) return;
@@ -219,6 +230,7 @@ export default function ThreadMessagesPage() {
 
         const ordered = batch.sort((a, b) => a.id - b.id);
         const oldHeight = el.scrollHeight;
+        const prevScrollTop = el.scrollTop;
         setMessages((prev) => {
           const seen = new Set(prev.map((m) => m.id));
           const unique = ordered.filter((m) => !seen.has(m.id));
@@ -226,8 +238,8 @@ export default function ThreadMessagesPage() {
         });
 
         requestAnimationFrame(() => {
-          el.scrollTop = el.scrollHeight - oldHeight;
-          isPrepending.current = false;
+          const delta = el.scrollHeight - oldHeight;
+          el.scrollTop = prevScrollTop + delta;
         });
       } finally {
         loadingMoreRef.current = false;
@@ -238,11 +250,6 @@ export default function ThreadMessagesPage() {
     el.addEventListener("scroll", onScroll);
     return () => el.removeEventListener("scroll", onScroll);
   }, [messages, hasMore]);
-
-  /* ---------- auto-scroll after DOM paint ---------- */
-  useLayoutEffect(() => {
-    if (!isPrepending.current) scrollToBottom(false);
-  }, [messages.length, scrollToBottom]);
 
   /* ---------- helpers ---------- */
   const isOwn = (m: Message) => m.senderUserId === currentUserId;
@@ -261,8 +268,10 @@ export default function ThreadMessagesPage() {
   };
 
   const handleDelete = async (id: number) => {
+    const atBottom = nearBottom();
     // local UX feel – hide ASAP; server broadcast covers the rest / companion
     setMessages((p) => p.filter((m) => m.id !== id));
+    if (atBottom) scrollToBottom(false);
     await api.delete(`/threads/${threadId}/messages/${id}`);
     // SignalR "MessageDeleted" is idempotent – no harm if it arrives after.
   };

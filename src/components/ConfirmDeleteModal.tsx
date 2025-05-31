@@ -1,5 +1,3 @@
-import React from "react";
-
 type Props = {
   title?: string;
   message?: string;
@@ -18,7 +16,7 @@ export default function ConfirmDeleteModal({
       className="modal fade show d-block"
       style={{ backgroundColor: "#00000066" }}
     >
-      <div className="modal-dialog">
+      <div className="modal-dialog modal-dialog-centered">
         <div className="modal-content">
           <div className="modal-header">
             <h5 className="modal-title">{title}</h5>

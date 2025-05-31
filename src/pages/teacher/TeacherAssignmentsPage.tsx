@@ -49,8 +49,9 @@ export default function TeacherAssignmentsPage() {
 
   return (
     <div>
-      <h5 className="mb-3">My Assignments</h5>
-
+      <div className="d-flex justify-content-center mb-3">
+        <h5 className="mb-0">My Assignments</h5>
+      </div>
       {loading ? (
         <p>Loading...</p>
       ) : Object.keys(grouped).length === 0 ? (

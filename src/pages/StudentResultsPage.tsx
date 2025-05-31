@@ -66,7 +66,6 @@ export default function StudentSubjectResultsPage() {
     <div className="d-flex min-vh-100">
       {/* Sidebar: Subject Selector */}
       <div className="bg-light border-end" style={{ width: "250px" }}>
-        <div className="p-3 border-bottom fw-bold">Subjects</div>
         <SubjectSelector
           subjects={subjects}
           selectedId={selectedSubjectId}

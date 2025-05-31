@@ -3,12 +3,19 @@ import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { api } from "../../../api/client";
 import ValidationErrorList from "../../../components/ValidationErrorList";
+import ConfirmDeleteModal from "../../../components/ConfirmDeleteModal";
 
 type Subject = {
   id: number;
   name: string;
   schoolId: number;
 };
+
+type ConfirmState = {
+  title: string;
+  message: string;
+  onConfirm: () => Promise<void>;
+} | null;
 
 export default function ClassGroupSubjectsPage() {
   const { id: schoolId, groupId } = useParams();
@@ -17,6 +24,7 @@ export default function ClassGroupSubjectsPage() {
   const [selectedId, setSelectedId] = useState<number | "">("");
   const [errors, setErrors] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
+  const [confirm, setConfirm] = useState<ConfirmState>(null);
 
   const load = () => {
     setLoading(true);
@@ -39,6 +47,7 @@ export default function ClassGroupSubjectsPage() {
 
   useEffect(load, [schoolId, groupId]);
 
+  /* ---------- Add subject ---------- */
   const handleAdd = async () => {
     setErrors([]);
     if (!selectedId) return;
@@ -59,23 +68,53 @@ export default function ClassGroupSubjectsPage() {
     }
   };
 
-  const handleDelete = async (subjectId: number) => {
+  /* ---------- Remove subject (un-assign) ---------- */
+  const queueRemoveSubject = (subjectId: number) =>
+    setConfirm({
+      title: "Remove Subject",
+      message:
+        "Remove this subject from the class group? All existing records for this subject will also be deleted. This cannot be undone.",
+      onConfirm: async () => {
+        await api.delete(
+          `/schools/${schoolId}/classgroups/${groupId}/subjects/${subjectId}`
+        );
+        load();
+      },
+    });
+
+  /* ---------- Delete all student records for subject ---------- */
+  const queueDeleteRecords = (subjectId: number) =>
+    setConfirm({
+      title: "Delete All Records",
+      message:
+        "Delete every grade, attendance and behaviour record for this subject in this class group? This cannot be undone.",
+      onConfirm: async () => {
+        await api.delete(
+          `/schools/${schoolId}/StudentRecords/classgroups/${groupId}/subjects/${subjectId}`
+        );
+        load();
+      },
+    });
+
+  /* ---------- Modal helpers ---------- */
+  const handleConfirm = async () => {
+    if (!confirm) return;
     try {
-      await api.delete(
-        `/schools/${schoolId}/classgroups/${groupId}/subjects/${subjectId}`
-      );
-      load();
-    } catch {
-      alert("Failed to remove subject.");
+      await confirm.onConfirm();
+    } finally {
+      setConfirm(null);
     }
   };
+  const handleCancel = () => setConfirm(null);
 
   return (
     <div>
-      <div className="d-flex justify-content-between align-items-center mb-3">
-        <h5 className="mb-0">Class Group Subjects</h5>
+      {/* Heading */}
+      <div className="d-flex justify-content-center align-items-center mb-3">
+        <h5 className="mb-0 text-center">Class Group Subjects</h5>
       </div>
 
+      {/* Add-subject control */}
       <div className="mb-3 d-flex gap-2">
         <select
           className="form-select"
@@ -114,15 +153,33 @@ export default function ClassGroupSubjectsPage() {
               className="list-group-item d-flex justify-content-between align-items-center"
             >
               <div>{s.name}</div>
-              <button
-                className="btn btn-sm btn-outline-danger"
-                onClick={() => handleDelete(s.id)}
-              >
-                Remove
-              </button>
+              <div className="d-flex gap-2">
+                <button
+                  className="btn btn-sm btn-warning text-dark"
+                  onClick={() => queueDeleteRecords(s.id)}
+                >
+                  Delete&nbsp;Records
+                </button>
+                <button
+                  className="btn btn-sm btn-outline-danger"
+                  onClick={() => queueRemoveSubject(s.id)}
+                >
+                  Remove
+                </button>
+              </div>
             </li>
           ))}
         </ul>
+      )}
+
+      {/* Shared confirmation modal */}
+      {confirm && (
+        <ConfirmDeleteModal
+          title={confirm.title}
+          message={confirm.message}
+          onConfirm={handleConfirm}
+          onCancel={handleCancel}
+        />
       )}
     </div>
   );

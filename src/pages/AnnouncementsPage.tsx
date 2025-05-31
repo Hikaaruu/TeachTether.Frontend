@@ -120,10 +120,12 @@ export default function AnnouncementsPage() {
     if (deletingId == null) return;
     try {
       await api.delete(`/announcements/${deletingId}`);
-      setDeletingId(null);
-      load();
+      // remove from local list
+      setAnnouncements((curr) => curr.filter((a) => a.id !== deletingId));
     } catch {
       alert("Failed to delete announcement.");
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -135,23 +137,52 @@ export default function AnnouncementsPage() {
 
     try {
       if (editing.id) {
-        // update
+        // ----- EDIT -----
+        // send update (no response body expected)
         await api.put(`/announcements/${editing.id}`, {
           title: editing.title.trim(),
           message: editing.message.trim(),
         });
+
+        // find the original announcement to pull its teacherId & createdAt
+        const original = announcements.find((a) => a.id === editing.id)!;
+
+        // merge fallback: overwrite title/message, preserve everything else
+        const updated: Announcement = {
+          ...original,
+          title: editing.title.trim(),
+          message: editing.message.trim(),
+        };
+
+        // replace in state & re-sort
+        setAnnouncements((curr) =>
+          curr
+            .map((a) => (a.id === updated.id ? updated : a))
+            .sort(
+              (a, b) =>
+                dayjs(b.createdAt).valueOf() - dayjs(a.createdAt).valueOf()
+            )
+        );
       } else {
-        // create
-        await api.post("/announcements", {
+        // ----- CREATE -----
+        const res = await api.post<Announcement>("/announcements", {
           title: editing.title.trim(),
           message: editing.message.trim(),
           targetAudience: editing.targetAudience,
           classGroupIds: editing.classGroupIds,
         });
+        const created = res.data;
+
+        setAnnouncements((curr) =>
+          [created, ...curr].sort(
+            (a, b) =>
+              dayjs(b.createdAt).valueOf() - dayjs(a.createdAt).valueOf()
+          )
+        );
       }
+
       setFormOpen(false);
       setEditing(null);
-      load();
     } catch (err: any) {
       const apiErr = err?.response?.data?.errors;
       setErrors(
@@ -164,11 +195,12 @@ export default function AnnouncementsPage() {
 
   return (
     <div>
-      <div className="d-flex justify-content-between align-items-center mb-3">
-        <h5 className="mb-0">Announcements</h5>
+      <div className="d-flex align-items-center mb-3">
+        <h5 className="flex-grow-1 text-center mb-0">Announcements</h5>
+
         {isTeacher && (
           <button
-            className="btn btn-success"
+            className="btn btn-success ms-2"
             onClick={() => (setFormOpen(true), openCreate())}
           >
             + Create
@@ -185,9 +217,11 @@ export default function AnnouncementsPage() {
           {announcements.map((a) => (
             <li
               key={a.id}
-              className="list-group-item d-flex justify-content-between align-items-start"
+              /* gap-3 just adds a little breathing room between the two columns */
+              className="list-group-item d-flex align-items-start gap-3"
             >
-              <div>
+              {/* ---------- text column ---------- */}
+              <div className="flex-grow-1 text-break" style={{ minWidth: 0 }}>
                 <div className="fw-semibold">{a.title}</div>
                 <small className="text-muted">
                   {dayjs(a.createdAt).format("DD MMM YYYY HH:mm")}
@@ -195,8 +229,9 @@ export default function AnnouncementsPage() {
                 <p className="mb-1 mt-2">{a.message}</p>
               </div>
 
+              {/* ---------- actions ---------- */}
               {isTeacher && a.teacherId === teacherId && (
-                <div className="d-flex flex-column gap-1 align-items-end">
+                <div className="d-flex flex-column gap-1 align-items-end flex-shrink-0">
                   <button
                     className="btn btn-sm btn-outline-primary"
                     onClick={() => (setFormOpen(true), openEdit(a))}

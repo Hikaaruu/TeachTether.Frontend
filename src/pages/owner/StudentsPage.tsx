@@ -41,11 +41,16 @@ export default function StudentsPage() {
   const [studentToDelete, setStudentToDelete] = useState<Student | null>(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
 
+  // just above your StudentsPage component
+  const compareStudents = (a: Student, b: Student) =>
+    a.user.lastName.localeCompare(b.user.lastName) ||
+    a.user.firstName.localeCompare(b.user.firstName);
+
   const loadStudents = () => {
     setLoading(true);
     api
       .get<Student[]>(`/schools/${schoolId}/students`)
-      .then((r) => setStudents(r.data))
+      .then((r) => setStudents(r.data.sort(compareStudents)))
       .catch(() => setStudents([]))
       .finally(() => setLoading(false));
   };
@@ -73,11 +78,13 @@ export default function StudentsPage() {
     if (!studentToDelete || !schoolId) return;
     try {
       await api.delete(`/schools/${schoolId}/students/${studentToDelete.id}`);
+      // remove from state
+      setStudents((curr) => curr.filter((s) => s.id !== studentToDelete.id));
+    } catch {
+      // Optional: toast
+    } finally {
       setShowDeleteModal(false);
       setStudentToDelete(null);
-      loadStudents();
-    } catch {
-      // Optional: add toast or alert
     }
   };
 
@@ -96,7 +103,7 @@ export default function StudentsPage() {
         lastName: editing!.lastName.trim(),
         sex: editing!.sex,
         ...(editing!.middleName?.trim() && {
-          middleName: editing!.middleName.trim(),
+          middleName: editing!.middleName!.trim(),
         }),
       },
       dateOfBirth: editing!.dateOfBirth,
@@ -104,14 +111,56 @@ export default function StudentsPage() {
 
     try {
       if (editing?.id) {
+        // — EDIT —
         await api.put(`/schools/${schoolId}/students/${editing.id}`, dto);
+
+        // merge into existing student
+        const original = students.find((s) => s.id === editing.id)!;
+        const updated: Student = {
+          ...original,
+          user: {
+            ...original.user,
+            firstName: dto.user.firstName,
+            middleName: (dto.user as any).middleName,
+            lastName: dto.user.lastName,
+            sex: dto.user.sex,
+          },
+          dateOfBirth: dto.dateOfBirth,
+        };
+
+        setStudents((curr) =>
+          curr
+            .map((s) => (s.id === updated.id ? updated : s))
+            .sort(compareStudents)
+        );
       } else {
-        const res = await api.post(`/schools/${schoolId}/students`, dto);
-        setCreds({ username: res.data.username, password: res.data.password });
+        // — CREATE —
+        const res = await api.post<{
+          id: number;
+          username: string;
+          password: string;
+          user: Student["user"];
+          dateOfBirth: string;
+        }>(`/schools/${schoolId}/students`, dto);
+
+        // show credentials
+        setCreds({
+          username: res.data.username,
+          password: res.data.password,
+        });
+
+        // prepend new student
+        const created: Student = {
+          id: res.data.id,
+          user: res.data.user,
+          dateOfBirth: res.data.dateOfBirth,
+        };
+
+        setStudents((curr) => [created, ...curr].sort(compareStudents));
       }
+
       setFormOpen(false);
       setEditing(null);
-      loadStudents();
     } catch (err: any) {
       const apiErr = err?.response?.data?.errors;
       setErrors(

@@ -87,22 +87,25 @@ export default function MessageThreadsPage() {
   const handleCreate = async () => {
     if (!selectedId) return;
     setSaving(true);
+
     try {
-      if (role === "Guardian") {
-        await api.post("/threads", {
-          teacherId: selectedId,
-          guardianId: user?.entityId,
-        });
-      } else {
-        await api.post("/threads", {
-          guardianId: selectedId,
-          teacherId: user?.entityId,
-        });
-      }
+      // 1) post & grab the new thread back from the server
+      const payload =
+        role === "Guardian"
+          ? { teacherId: selectedId, guardianId: user?.entityId }
+          : { guardianId: selectedId, teacherId: user?.entityId };
+
+      const res = await api.post<Thread>("/threads", payload);
+      const created = res.data;
+
+      // 2) append it to the existing list
+      setThreads((curr) => [...curr, created]);
+
+      // 3) close modal & reset
       setFormOpen(false);
       setSelectedId("");
-      const tRes = await api.get<Thread[]>("/threads");
-      setThreads(tRes.data);
+    } catch (err) {
+      console.error("Create thread failed", err);
     } finally {
       setSaving(false);
     }
@@ -115,11 +118,18 @@ export default function MessageThreadsPage() {
 
   const handleDeleteConfirm = async () => {
     if (!threadToDelete) return;
-    await api.delete(`/threads/${threadToDelete.id}`);
-    const tRes = await api.get<Thread[]>("/threads");
-    setThreads(tRes.data);
-    setShowDeleteModal(false);
-    setThreadToDelete(null);
+
+    try {
+      await api.delete(`/threads/${threadToDelete.id}`);
+
+      // remove it from state
+      setThreads((curr) => curr.filter((t) => t.id !== threadToDelete.id));
+    } catch (err) {
+      console.error("Delete thread failed", err);
+    } finally {
+      setShowDeleteModal(false);
+      setThreadToDelete(null);
+    }
   };
 
   const handleDeleteCancel = () => {

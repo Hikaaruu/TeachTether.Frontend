@@ -21,18 +21,21 @@ interface Grade {
   gradeType: string;
   comment?: string;
   gradeDate: string;
+  teacherName: string;
 }
 interface Behavior {
   id: number;
   behaviorScore: number;
   comment?: string;
   behaviorDate: string;
+  teacherName: string;
 }
 interface Attendance {
   id: number;
   attendanceDate: string;
   status: string;
   comment?: string;
+  teacherName: string;
 }
 
 /* ---------- enums (keep UI & DTO in sync) ---------- */
@@ -165,67 +168,144 @@ export default function StudentResults({
     e.preventDefault();
     setErrors([]);
 
-    let apiCall: Promise<any>;
-    if (formKind === "grade") {
-      const base = {
-        subjectId: +subjectId,
-        gradeValue: +(e.target as any).gradeValue.value,
-        gradeType: (e.target as any).gradeType.value,
-        comment: (e.target as any).comment.value.trim() || null,
-      };
-      const dto = editing
-        ? base // update – no date
-        : { ...base, gradeDate: (e.target as any).date.value }; // create
-      apiCall = editing
-        ? api.put(
-            `/schools/${schoolId}/students/${studentId}/grades/${
-              (editing as Grade).id
-            }`,
-            dto
-          )
-        : api.post(`/schools/${schoolId}/students/${studentId}/grades`, dto);
-    } else if (formKind === "behavior") {
-      const base = {
-        subjectId: +subjectId,
-        behaviorScore: +(e.target as any).behaviorScore.value,
-        comment: (e.target as any).comment.value.trim() || null,
-      };
-      const dto = editing
-        ? base
-        : { ...base, behaviorDate: (e.target as any).date.value };
-      apiCall = editing
-        ? api.put(
-            `/schools/${schoolId}/students/${studentId}/behavior/${
-              (editing as Behavior).id
-            }`,
-            dto
-          )
-        : api.post(`/schools/${schoolId}/students/${studentId}/behavior`, dto);
-    } else {
-      const base = {
-        subjectId: +subjectId,
-        status: (e.target as any).status.value,
-        comment: (e.target as any).comment.value.trim() || null,
-      };
-      const dto = editing
-        ? base
-        : { ...base, attendanceDate: (e.target as any).date.value };
-      apiCall = editing
-        ? api.put(
-            `/schools/${schoolId}/students/${studentId}/attendance/${
-              (editing as Attendance).id
-            }`,
-            dto
-          )
-        : api.post(
-            `/schools/${schoolId}/students/${studentId}/attendance`,
-            dto
-          );
-    }
-
     try {
-      await apiCall;
-      await load();
+      const form = e.target as any;
+      let res: any;
+      let saved: Grade | Behavior | Attendance;
+
+      if (formKind === "grade") {
+        const base = {
+          subjectId: +subjectId,
+          gradeValue: +form.gradeValue.value,
+          gradeType: form.gradeType.value,
+          comment: form.comment.value.trim() || null,
+        };
+        const dto = editing ? base : { ...base, gradeDate: form.date.value };
+
+        res = editing
+          ? await api.put(
+              `/schools/${schoolId}/students/${studentId}/grades/${
+                (editing as Grade).id
+              }`,
+              dto
+            )
+          : await api.post(
+              `/schools/${schoolId}/students/${studentId}/grades`,
+              dto
+            );
+
+        // if PUT returns 204, res.data will be empty → merge edit + dto
+        const returned = res.data as Grade;
+        const saved: Grade =
+          returned && typeof returned.id === "number"
+            ? returned
+            : {
+                // fallback: merge your edit + dto
+                ...(editing as Grade),
+                ...dto,
+                id: (editing as Grade).id,
+                gradeDate: (editing as Grade).gradeDate,
+              };
+
+        setGrades((curr) => {
+          const arr = editing
+            ? curr.map((g) => (g.id === saved.id ? (saved as Grade) : g))
+            : [saved as Grade, ...curr];
+          // sort descending by gradeDate
+          return arr.sort(
+            (a, b) =>
+              dayjs((b as Grade).gradeDate).valueOf() -
+              dayjs((a as Grade).gradeDate).valueOf()
+          );
+        });
+      } else if (formKind === "behavior") {
+        const base = {
+          subjectId: +subjectId,
+          behaviorScore: +form.behaviorScore.value,
+          comment: form.comment.value.trim() || null,
+        };
+        const dto = editing ? base : { ...base, behaviorDate: form.date.value };
+
+        res = editing
+          ? await api.put(
+              `/schools/${schoolId}/students/${studentId}/behavior/${
+                (editing as Behavior).id
+              }`,
+              dto
+            )
+          : await api.post(
+              `/schools/${schoolId}/students/${studentId}/behavior`,
+              dto
+            );
+
+        const returnedB = res.data as Behavior;
+        const savedB: Behavior =
+          returnedB && typeof returnedB.id === "number"
+            ? returnedB
+            : {
+                ...(editing as Behavior),
+                ...dto,
+                id: (editing as Behavior).id,
+                behaviorDate: (editing as Behavior).behaviorDate,
+              };
+
+        setBehavior((curr) => {
+          const arr = editing
+            ? curr.map((b) => (b.id === savedB.id ? (savedB as Behavior) : b))
+            : [savedB as Behavior, ...curr];
+          return arr.sort(
+            (a, b) =>
+              dayjs((b as Behavior).behaviorDate).valueOf() -
+              dayjs((a as Behavior).behaviorDate).valueOf()
+          );
+        });
+      } else {
+        // attendance
+        const base = {
+          subjectId: +subjectId,
+          status: form.status.value,
+          comment: form.comment.value.trim() || null,
+        };
+        const dto = editing
+          ? base
+          : { ...base, attendanceDate: form.date.value };
+
+        res = editing
+          ? await api.put(
+              `/schools/${schoolId}/students/${studentId}/attendance/${
+                (editing as Attendance).id
+              }`,
+              dto
+            )
+          : await api.post(
+              `/schools/${schoolId}/students/${studentId}/attendance`,
+              dto
+            );
+
+        const returnedA = res.data as Attendance;
+        const savedA: Attendance =
+          returnedA && typeof returnedA.id === "number"
+            ? returnedA
+            : {
+                ...(editing as Attendance),
+                ...dto,
+                id: (editing as Attendance).id,
+                attendanceDate: (editing as Attendance).attendanceDate,
+              };
+
+        setAttendance((curr) => {
+          const arr = editing
+            ? curr.map((a) => (a.id === savedA.id ? (savedA as Attendance) : a))
+            : [savedA as Attendance, ...curr];
+          return arr.sort(
+            (a, b) =>
+              dayjs((b as Attendance).attendanceDate).valueOf() -
+              dayjs((a as Attendance).attendanceDate).valueOf()
+          );
+        });
+      }
+
+      // close modal
       setFormOpen(false);
       setEditing(null);
     } catch (err: any) {
@@ -244,21 +324,40 @@ export default function StudentResults({
     setDelModalOpen(true);
   };
 
+  // inside StudentResults component
+
   const confirmDelete = async () => {
     if (!delTarget) return;
+
+    const { kind, id } = delTarget;
     const urlPart =
-      delTarget.kind === "grade"
+      kind === "grade"
         ? "grades"
-        : delTarget.kind === "behavior"
+        : kind === "behavior"
         ? "behavior"
         : "attendance";
 
-    await api.delete(
-      `/schools/${schoolId}/students/${studentId}/${urlPart}/${delTarget.id}`
-    );
-    await load();
-    setDelModalOpen(false);
-    setDelTarget(null);
+    try {
+      await api.delete(
+        `/schools/${schoolId}/students/${studentId}/${urlPart}/${id}`
+      );
+
+      // remove from local state instead of re-loading
+      if (kind === "grade") {
+        setGrades((curr) => curr.filter((g) => g.id !== id));
+      } else if (kind === "behavior") {
+        setBehavior((curr) => curr.filter((b) => b.id !== id));
+      } else {
+        setAttendance((curr) => curr.filter((a) => a.id !== id));
+      }
+    } catch (err: any) {
+      // you can surfacing an error here if you like
+      console.error("Delete failed", err);
+      setErrors(["Failed to delete record."]);
+    } finally {
+      setDelModalOpen(false);
+      setDelTarget(null);
+    }
   };
 
   const cancelDelete = () => {
@@ -292,6 +391,7 @@ export default function StudentResults({
         <p>Loading...</p>
       ) : (
         <>
+          {/* ---------- GRADES ---------- */}
           <RecordSection
             title="Grades"
             data={grades}
@@ -299,16 +399,25 @@ export default function StudentResults({
             onAdd={() => openCreate("grade")}
             render={(g: Grade) => (
               <div className="w-100">
-                <div className="d-flex justify-content-between align-items-center gap-2">
-                  <div className="d-flex align-items-center gap-2">
-                    <span className="badge bg-secondary">{g.gradeType}</span>
-                    <span className="fw-semibold">{g.gradeValue}/100</span>
-                  </div>
-                  <small className="text-muted">{dateFmt(g.gradeDate)}</small>
+                {/* badge ——— score ——— date (spaced with ms-4 / ps-4) */}
+                <div className="d-flex align-items-center">
+                  <span className="badge bg-secondary flex-shrink-0">
+                    {g.gradeType}
+                  </span>
+                  <span className="ms-3">{g.gradeValue}/100</span>{" "}
+                  {/* ➜ ms-4 */}
+                  <small className="text-muted ms-auto me-2 ps-3">
+                    Date: {dateFmt(g.gradeDate)}
+                  </small>
                 </div>
+
+                <div className="small text-muted mt-1">
+                  Teacher: {g.teacherName}
+                </div>
+
                 {g.comment && (
-                  <div className="text-muted small fst-italic mt-1">
-                    {g.comment}
+                  <div className="small text-muted fst-italic mt-1 text-break">
+                    Comment: {g.comment}
                   </div>
                 )}
               </div>
@@ -317,6 +426,7 @@ export default function StudentResults({
             onDelete={(g) => handleDeleteRequest("grade", g.id)}
           />
 
+          {/* ---------- BEHAVIOR ---------- */}
           <RecordSection
             title="Behavior"
             data={behavior}
@@ -324,18 +434,23 @@ export default function StudentResults({
             onAdd={() => openCreate("behavior")}
             render={(b: Behavior) => (
               <div className="w-100">
-                <div className="d-flex justify-content-between align-items-center gap-2">
-                  <div className="d-flex align-items-center gap-2">
-                    <span className="badge bg-info text-dark">Behavior</span>
-                    <span className="fw-semibold">{b.behaviorScore}/10</span>
-                  </div>
-                  <small className="text-muted">
-                    {dateFmt(b.behaviorDate)}
+                <div className="d-flex align-items-center">
+                  <span className="badge bg-info text-dark flex-shrink-0">
+                    Behavior
+                  </span>
+                  <span className="ms-3">{b.behaviorScore}/10</span>
+                  <small className="text-muted ms-auto ps-3 me-2">
+                    Date: {dateFmt(b.behaviorDate)}
                   </small>
                 </div>
+
+                <div className="small text-muted mt-1">
+                  Teacher: {b.teacherName}
+                </div>
+
                 {b.comment && (
-                  <div className="text-muted small fst-italic mt-1">
-                    {b.comment}
+                  <div className="small text-muted fst-italic mt-1 text-break">
+                    Comment: {b.comment}
                   </div>
                 )}
               </div>
@@ -344,6 +459,7 @@ export default function StudentResults({
             onDelete={(b) => handleDeleteRequest("behavior", b.id)}
           />
 
+          {/* ---------- ATTENDANCE ---------- */}
           <RecordSection
             title="Attendance"
             data={attendance}
@@ -351,19 +467,24 @@ export default function StudentResults({
             onAdd={() => openCreate("attendance")}
             render={(a: Attendance) => (
               <div className="w-100">
-                <div className="d-flex justify-content-between align-items-center gap-2">
-                  <div className="d-flex align-items-center gap-2">
-                    <span className={`badge ${statusBadge(a.status)}`}>
-                      {a.status}
-                    </span>
-                  </div>
-                  <small className="text-muted">
-                    {dateFmt(a.attendanceDate)}
+                <div className="d-flex align-items-center">
+                  <span
+                    className={`badge ${statusBadge(a.status)} flex-shrink-0`}
+                  >
+                    {a.status}
+                  </span>
+                  <small className="text-muted ms-auto ps-3 me-2">
+                    Date: {dateFmt(a.attendanceDate)}
                   </small>
                 </div>
+
+                <div className="small text-muted mt-1">
+                  Teacher: {a.teacherName}
+                </div>
+
                 {a.comment && (
-                  <div className="text-muted small fst-italic mt-1">
-                    {a.comment}
+                  <div className="small text-muted fst-italic mt-1 text-break">
+                    Comment: {a.comment}
                   </div>
                 )}
               </div>
@@ -484,7 +605,12 @@ function RecordSection<T extends { id: number }>({
                 key={item.id}
                 className="list-group-item d-flex justify-content-between align-items-start"
               >
-                <div>{render(item)}</div>
+                <div
+                  className="flex-grow-1 overflow-hidden" // ⬅ keeps cell from widening
+                  style={{ minWidth: 0 }}
+                >
+                  {render(item)}
+                </div>
                 {editable && (
                   <div className="ms-2 btn-group btn-group-sm">
                     <button

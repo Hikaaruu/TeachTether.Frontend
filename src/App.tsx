@@ -1,11 +1,12 @@
 // src/App.tsx
 import "bootstrap/dist/css/bootstrap.min.css";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { AuthProvider, useAuth } from "./auth/AuthProvider";
+import { AuthProvider } from "./auth/AuthProvider";
 import { ProtectedRoute } from "./routes/ProtectedRoute";
 import Login from "./pages/Login";
 import Regiser from "./pages/Register";
 import NotFound from "./pages/NotFound";
+import Forbidden from "./pages/Forbidden";
 import StartupRedirect from "./pages/StartupRedirect";
 import { UserRole } from "./types/roles";
 import ProfilePage from "./pages/ProfilePage";
@@ -207,6 +208,7 @@ export default function App() {
 
           {/* Fallback */}
           <Route path="/404" element={<NotFound />} />
+          <Route path="/403" element={<Forbidden />} />
           <Route path="*" element={<Navigate to="/404" replace />} />
           <Route path="/" element={<StartupRedirect />} />
         </Routes>

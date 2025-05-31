@@ -32,7 +32,7 @@ export default function TeacherClassGroupsPage() {
 
   return (
     <div>
-      <div className="d-flex justify-content-between align-items-center mb-3">
+      <div className="d-flex justify-content-center mb-3">
         <h5 className="mb-0">Your Class Groups</h5>
       </div>
 

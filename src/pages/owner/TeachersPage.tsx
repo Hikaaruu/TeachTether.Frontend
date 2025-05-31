@@ -43,11 +43,16 @@ export default function TeachersPage() {
   const [teacherToDelete, setTeacherToDelete] = useState<Teacher | null>(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
 
+  // sort by lastName then firstName
+  const compareTeachers = (a: Teacher, b: Teacher) =>
+    a.user.lastName.localeCompare(b.user.lastName) ||
+    a.user.firstName.localeCompare(b.user.firstName);
+
   const loadTeachers = () => {
     setLoading(true);
     api
       .get<Teacher[]>(`/schools/${schoolId}/teachers`)
-      .then((r) => setTeachers(r.data))
+      .then((r) => setTeachers(r.data.sort(compareTeachers)))
       .catch(() => setTeachers([]))
       .finally(() => setLoading(false));
   };
@@ -77,15 +82,15 @@ export default function TeachersPage() {
     if (!teacherToDelete || !schoolId) return;
     try {
       await api.delete(`/schools/${schoolId}/teachers/${teacherToDelete.id}`);
-      setShowDeleteModal(false);
-      setTeacherToDelete(null);
-      setDeleteError(null); // clear any previous error
-      loadTeachers();
+      // remove from state
+      setTeachers((curr) => curr.filter((t) => t.id !== teacherToDelete.id));
+      setDeleteError(null);
     } catch {
-      setShowDeleteModal(false);
       setDeleteError(
         `Failed to delete teacher "${teacherToDelete.user.firstName} ${teacherToDelete.user.lastName}". They are probably assigned as a homeroom teacher to a class group.`
       );
+    } finally {
+      setShowDeleteModal(false);
       setTeacherToDelete(null);
     }
   };
@@ -113,17 +118,50 @@ export default function TeachersPage() {
 
     try {
       if (editing?.id) {
+        // — EDIT —
         await api.put(`/schools/${schoolId}/teachers/${editing.id}`, dto);
+
+        const original = teachers.find((t) => t.id === editing.id)!;
+        const updated: Teacher = {
+          ...original,
+          user: {
+            ...original.user,
+            firstName: dto.user.firstName,
+            middleName: (dto.user as any).middleName,
+            lastName: dto.user.lastName,
+            sex: dto.user.sex,
+          },
+          dateOfBirth: dto.dateOfBirth,
+        };
+
+        setTeachers((curr) =>
+          curr
+            .map((t) => (t.id === updated.id ? updated : t))
+            .sort(compareTeachers)
+        );
       } else {
-        const res = await api.post(`/schools/${schoolId}/teachers`, dto);
-        setCreds({
-          username: res.data.username,
-          password: res.data.password,
-        });
+        // — CREATE —
+        const res = await api.post<{
+          id: number;
+          username: string;
+          password: string;
+          user: Teacher["user"];
+          dateOfBirth: string;
+        }>(`/schools/${schoolId}/teachers`, dto);
+
+        setCreds({ username: res.data.username, password: res.data.password });
+
+        const created: Teacher = {
+          id: res.data.id,
+          user: res.data.user,
+          dateOfBirth: res.data.dateOfBirth,
+        };
+
+        setTeachers((curr) => [created, ...curr].sort(compareTeachers));
       }
+
       setFormOpen(false);
       setEditing(null);
-      loadTeachers();
     } catch (err: any) {
       const apiErr = err?.response?.data?.errors;
       setErrors(
