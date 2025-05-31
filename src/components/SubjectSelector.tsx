@@ -1,6 +1,4 @@
 // File: components/SubjectSelector.tsx
-import React from "react";
-
 type Subject = {
   id: number;
   name: string;

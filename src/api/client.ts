@@ -25,8 +25,12 @@ api.interceptors.response.use(
 
     console.error("API error:", err.response?.data || err.message);
 
+    const currentPath = window.location.pathname;
+
     // auth
-    if (status === 401) return instantRedirect("/login");
+    if (status === 401 && currentPath !== "/login") {
+      return instantRedirect("/login");
+    }
     if (status === 403) return instantRedirect("/403");
 
     // wrong / missing resource on GET
