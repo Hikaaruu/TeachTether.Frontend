@@ -159,7 +159,6 @@ export default function ClassGroupsPage() {
         </ul>
       )}
 
-      {/* Modal */}
       {formOpen && editing && (
         <div
           className="modal fade show d-block"

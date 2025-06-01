@@ -5,8 +5,6 @@ import ValidationErrorList from "../../components/ValidationErrorList";
 import CredentialsModal from "../../components/CredentialsModal";
 import ConfirmDeleteModal from "../../components/ConfirmDeleteModal";
 
-// Types
-
 type Guardian = {
   id: number;
   dateOfBirth: string;
@@ -238,7 +236,6 @@ export default function GuardiansPage() {
                 </div>
               </div>
 
-              {/* Student assignment */}
               <div className="mt-3 ms-3">
                 <div className="d-flex gap-2 mb-2">
                   <select

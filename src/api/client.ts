@@ -2,7 +2,7 @@ import axios from "axios";
 import { getToken } from "../auth/tokenStorage";
 
 export const api = axios.create({
-  baseURL: "/api", // let Vite proxy redirect to backend
+  baseURL: "/api",
 });
 
 api.interceptors.request.use((cfg) => {
@@ -12,7 +12,6 @@ api.interceptors.request.use((cfg) => {
 });
 
 function instantRedirect(path: string) {
-  // make current UI invisible *now*
   document.documentElement.style.opacity = "0";
   window.location.replace(path);
 }
@@ -27,13 +26,11 @@ api.interceptors.response.use(
 
     const currentPath = window.location.pathname;
 
-    // auth
     if (status === 401 && currentPath !== "/login") {
       return instantRedirect("/login");
     }
     if (status === 403) return instantRedirect("/403");
 
-    // wrong / missing resource on GET
     if (method === "GET" && (status === 400 || status === 404)) {
       return instantRedirect("/404");
     }

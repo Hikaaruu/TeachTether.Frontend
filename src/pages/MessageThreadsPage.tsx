@@ -1,11 +1,9 @@
-// File: pages/messages/MessageThreadsPage.tsx
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { api } from "../api/client";
 import { useAuth } from "../auth/AuthProvider";
-import ConfirmDeleteModal from "../components/ConfirmDeleteModal"; // adjust path if needed
+import ConfirmDeleteModal from "../components/ConfirmDeleteModal";
 
-/* ---------- Types ---------- */
 type Thread = {
   id: number;
   teacherId: number;
@@ -24,14 +22,12 @@ type Guardian = {
 
 type UserKind = "Teacher" | "Guardian";
 
-/* ---------- Helpers ---------- */
 const fullName = (u: {
   firstName: string;
   middleName?: string;
   lastName: string;
 }) => [u.firstName, u.middleName, u.lastName].filter(Boolean).join(" ");
 
-/* ---------- Page ---------- */
 export default function MessageThreadsPage() {
   const { user } = useAuth();
   const role: UserKind = user?.role === "Teacher" ? "Teacher" : "Guardian";
@@ -89,7 +85,6 @@ export default function MessageThreadsPage() {
     setSaving(true);
 
     try {
-      // 1) post & grab the new thread back from the server
       const payload =
         role === "Guardian"
           ? { teacherId: selectedId, guardianId: user?.entityId }
@@ -98,10 +93,8 @@ export default function MessageThreadsPage() {
       const res = await api.post<Thread>("/threads", payload);
       const created = res.data;
 
-      // 2) append it to the existing list
       setThreads((curr) => [...curr, created]);
 
-      // 3) close modal & reset
       setFormOpen(false);
       setSelectedId("");
     } catch (err) {
@@ -122,7 +115,6 @@ export default function MessageThreadsPage() {
     try {
       await api.delete(`/threads/${threadToDelete.id}`);
 
-      // remove it from state
       setThreads((curr) => curr.filter((t) => t.id !== threadToDelete.id));
     } catch (err) {
       console.error("Delete thread failed", err);
@@ -192,7 +184,6 @@ export default function MessageThreadsPage() {
         </ul>
       )}
 
-      {/* ---------- Create Modal ---------- */}
       {formOpen && (
         <div
           className="modal fade show d-block"
@@ -256,7 +247,6 @@ export default function MessageThreadsPage() {
         </div>
       )}
 
-      {/* ---------- Confirm Delete Modal ---------- */}
       {showDeleteModal && threadToDelete && (
         <ConfirmDeleteModal
           title="Delete Conversation"

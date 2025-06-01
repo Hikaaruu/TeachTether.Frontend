@@ -1,4 +1,3 @@
-// File: pages/analytics/StudentAnalyticsPage.tsx
 import { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
 import { api } from "../api/client";
@@ -20,7 +19,6 @@ import {
   Legend,
 } from "recharts";
 
-/* ---------- Types ---------- */
 type Grade = {
   id: number;
   gradeValue: number;
@@ -40,7 +38,6 @@ type ClassAvg = {
   };
 };
 
-/* ---------- Helpers ---------- */
 const COLORS = ["#8884d8", "#82ca9d", "#ffc658", "#ff8042"];
 const dateKey = (iso: string) => dayjs(iso).format("YYYY-MM-DD");
 const round = (v: number, d = 2) => parseFloat(v.toFixed(d));
@@ -58,7 +55,6 @@ function aggregateLine(records: { date: string; value: number }[]) {
     .sort((a, b) => a.date.localeCompare(b.date));
 }
 
-/* readable labels for grade types */
 const gradeTypeLabels: Record<string, string> = {
   Exam: "Exam",
   Quiz: "Quiz",
@@ -84,14 +80,12 @@ export default function StudentAnalyticsPage() {
   const [attendances, setAttendances] = useState<Attendance[]>([]);
   const [classAvg, setClassAvg] = useState<ClassAvg | null>(null);
 
-  /* heading */
   const [studentName, setStudentName] = useState("");
   const [subjectName, setSubjectName] = useState("");
   const [classGroupLabel, setClassGroupLabel] = useState("");
 
   const [loading, setLoading] = useState(true);
 
-  /* ---------- fetch ---------- */
   useEffect(() => {
     if (!schoolId || !subjectId || !studentId) return;
 
@@ -143,7 +137,6 @@ export default function StudentAnalyticsPage() {
     fetchAll();
   }, [schoolId, subjectId, studentId]);
 
-  /* ---------- derived ---------- */
   const gradeTrend = useMemo(
     () =>
       aggregateLine(
@@ -190,7 +183,6 @@ export default function StudentAnalyticsPage() {
     }));
   }, [grades]);
 
-  /* averages */
   const studentGradeAvg =
     gradeTrend.length > 0
       ? round(gradeTrend.reduce((a, b) => a + b.value, 0) / gradeTrend.length)
@@ -202,19 +194,15 @@ export default function StudentAnalyticsPage() {
         )
       : 0;
 
-  /* ---------- render ---------- */
   if (loading) return <p>Loading analytics…</p>;
 
   return (
     <div className="d-flex flex-column gap-4">
-      {/* Heading */}
       <h3 className="text-center fw-semibold text-primary-emphasis">
         {studentName} – {subjectName} ({classGroupLabel})
       </h3>
 
-      {/* --- Trends (wider charts) --- */}
       <div className="row g-3 mb-4">
-        {/* Grade trend */}
         <div className="col-md-6">
           <h6 className="text-center mb-1">Grade Trend</h6>
           {gradeTrend.length < 2 ? (
@@ -244,7 +232,6 @@ export default function StudentAnalyticsPage() {
           )}
         </div>
 
-        {/* Behavior trend */}
         <div className="col-md-6">
           <h6 className="text-center mb-1">Behavior Trend</h6>
           {behaviorTrend.length < 2 ? (
@@ -275,9 +262,7 @@ export default function StudentAnalyticsPage() {
         </div>
       </div>
 
-      {/* Grade distribution & attendance pie */}
       <div className="row g-3 mb-4">
-        {/* Grade type distribution (extra width + vertical legend) */}
         <div className="col-md-6">
           <h6 className="text-center mb-1">Grade Type Distribution</h6>
           {gradeTypeDist.length === 0 ? (
@@ -314,7 +299,6 @@ export default function StudentAnalyticsPage() {
           )}
         </div>
 
-        {/* Attendance pie (unchanged spacing) */}
         <div className="col-md-6 d-flex flex-column align-items-center">
           <h6 className="text-center mb-1">Attendance Statuses</h6>
           {attendances.length === 0 ? (
@@ -347,9 +331,7 @@ export default function StudentAnalyticsPage() {
         </div>
       </div>
 
-      {/* ---------- Comparison ---------- */}
       <div className="row g-3 mb-4">
-        {/* Grade vs class */}
         <div className="col-md-6">
           <h6 className="text-center mb-1">Grade: Student vs Class</h6>
           {classAvg ? (
@@ -379,7 +361,6 @@ export default function StudentAnalyticsPage() {
           )}
         </div>
 
-        {/* Behavior vs class */}
         <div className="col-md-6">
           <h6 className="text-center mb-1">Behavior: Student vs Class</h6>
           {classAvg ? (
@@ -410,7 +391,6 @@ export default function StudentAnalyticsPage() {
         </div>
       </div>
 
-      {/* ---------- Attendance compare ---------- */}
       <div className="row g-3">
         <div className="col-12 col-lg-8 offset-lg-2">
           <h6 className="text-center mb-1">

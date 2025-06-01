@@ -1,4 +1,3 @@
-// File: pages/teacher/StudentSubjectResultsPage.tsx
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { api } from "../api/client";
@@ -38,14 +37,12 @@ export default function StudentSubjectResultsPage() {
 
       setLoading(true);
       try {
-        // Get class group
         const groupRes = await api.get<ClassGroup>(
           `/schools/${schoolId}/students/${studentId}/classgroup`
         );
         const groupId = groupRes.data.id;
         setClassGroupId(String(groupId));
 
-        // Get subjects for that class group
         const subjectsRes = await api.get<Subject[]>(
           `/schools/${schoolId}/classgroups/${groupId}/subjects`
         );
@@ -64,7 +61,6 @@ export default function StudentSubjectResultsPage() {
 
   return (
     <div className="d-flex min-vh-100">
-      {/* Sidebar: Subject Selector */}
       <div className="bg-light border-end" style={{ width: "250px" }}>
         <SubjectSelector
           subjects={subjects}
@@ -73,7 +69,6 @@ export default function StudentSubjectResultsPage() {
         />
       </div>
 
-      {/* Main panel: Student Results */}
       <div className="flex-grow-1 p-4 overflow-auto">
         {selectedSubjectId && studentId ? (
           <StudentResults

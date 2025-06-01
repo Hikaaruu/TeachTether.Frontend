@@ -92,10 +92,8 @@ export default function AdminsPage() {
     if (!adminToDelete || !schoolId) return;
     try {
       await api.delete(`/schools/${schoolId}/schooladmins/${adminToDelete.id}`);
-      // remove from local state
       setAdmins((curr) => curr.filter((a) => a.id !== adminToDelete.id));
     } catch {
-      // Optional: show error toast
     } finally {
       setShowDeleteModal(false);
       setAdminToDelete(null);
@@ -124,13 +122,11 @@ export default function AdminsPage() {
 
     try {
       if (editingAdmin?.id) {
-        // — EDIT —
         await api.put(
           `/schools/${schoolId}/schooladmins/${editingAdmin.id}`,
           dto
         );
 
-        // find the original and merge in your updated values
         const original = admins.find((a) => a.id === editingAdmin.id)!;
         const updated: SchoolAdmin = {
           ...original,
@@ -143,7 +139,6 @@ export default function AdminsPage() {
           },
         };
 
-        // replace in the list
         setAdmins((curr) =>
           curr
             .map((a) => (a.id === updated.id ? updated : a))
@@ -152,7 +147,6 @@ export default function AdminsPage() {
 
         setFormOpen(false);
       } else {
-        // — CREATE —
         const res = await api.post<{
           id: number;
           username: string;
@@ -160,7 +154,6 @@ export default function AdminsPage() {
           user: SchoolAdmin["user"];
         }>(`/schools/${schoolId}/schooladmins`, dto);
 
-        // pull credentials & new admin data out of the response
         setCreatedCredentials({
           username: res.data.username,
           password: res.data.password,
@@ -171,7 +164,6 @@ export default function AdminsPage() {
           user: res.data.user,
         };
 
-        // prepend to the list
         setAdmins((curr) => [created, ...curr].sort(compareAdmins));
         setFormOpen(false);
       }
@@ -229,7 +221,6 @@ export default function AdminsPage() {
         </ul>
       )}
 
-      {/* Form Modal */}
       {formOpen && (
         <div
           className="modal fade show d-block"
@@ -326,7 +317,6 @@ export default function AdminsPage() {
         </div>
       )}
 
-      {/* Credentials Modal */}
       {createdCredentials && (
         <CredentialsModal
           username={createdCredentials.username}
@@ -335,7 +325,6 @@ export default function AdminsPage() {
         />
       )}
 
-      {/* Delete Confirmation Modal */}
       {showDeleteModal && adminToDelete && (
         <ConfirmDeleteModal
           title="Delete Admin"

@@ -30,7 +30,6 @@ export default function CredentialsModal({
           </div>
 
           <div className="modal-body text-center">
-            {/* Username Field */}
             <div className="mb-3">
               <label className="form-label w-100 text-center">Username</label>
               <div className="d-flex">
@@ -51,7 +50,6 @@ export default function CredentialsModal({
               </div>
             </div>
 
-            {/* Password Field */}
             <div className="mb-3">
               <label className="form-label w-100 text-center">Password</label>
               <div className="d-flex">
@@ -83,7 +81,6 @@ export default function CredentialsModal({
               </div>
             </div>
 
-            {/* Copy All Button */}
             <button
               className="btn btn-outline-dark btn-sm mb-3"
               onClick={() =>

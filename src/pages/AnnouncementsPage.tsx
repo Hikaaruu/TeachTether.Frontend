@@ -1,4 +1,3 @@
-// File: pages/AnnouncementsPage.tsx
 import { useEffect, useState } from "react";
 import { api } from "../api/client";
 import { useAuth } from "../auth/AuthProvider";
@@ -6,7 +5,6 @@ import dayjs from "dayjs";
 import ValidationErrorList from "../components/ValidationErrorList";
 import ConfirmDeleteModal from "../components/ConfirmDeleteModal";
 
-/* ---------- TYPES ---------- */
 type Announcement = {
   id: number;
   teacherId: number;
@@ -29,7 +27,6 @@ type FormState = {
   classGroupIds: number[];
 };
 
-/* ---------- GROUP CHECK ITEM ---------- */
 function GroupCheck({
   group,
   checked,
@@ -55,24 +52,20 @@ function GroupCheck({
   );
 }
 
-/* ---------- PAGE ---------- */
 export default function AnnouncementsPage() {
   const { user } = useAuth();
   const isTeacher = user?.role === "Teacher";
   const teacherId = user?.entityId;
 
-  /* state */
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [clsGroups, setClsGroups] = useState<ClassGroup[]>([]);
   const [loading, setLoading] = useState(true);
   const [deletingId, setDeletingId] = useState<number | null>(null);
 
-  /* modal state */
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<FormState | null>(null);
   const [errors, setErrors] = useState<string[]>([]);
 
-  /* load announcements (and groups for teachers) */
   const load = async () => {
     setLoading(true);
     try {
@@ -98,7 +91,6 @@ export default function AnnouncementsPage() {
     load();
   }, []);
 
-  /* helpers */
   const openCreate = () =>
     setEditing({
       title: "",
@@ -112,15 +104,14 @@ export default function AnnouncementsPage() {
       id: a.id,
       title: a.title,
       message: a.message,
-      targetAudience: "StudentAndGuardian", // audience can’t be changed
-      classGroupIds: [], // not editable after creation
+      targetAudience: "StudentAndGuardian",
+      classGroupIds: [],
     });
 
   const handleDelete = async () => {
     if (deletingId == null) return;
     try {
       await api.delete(`/announcements/${deletingId}`);
-      // remove from local list
       setAnnouncements((curr) => curr.filter((a) => a.id !== deletingId));
     } catch {
       alert("Failed to delete announcement.");
@@ -129,7 +120,6 @@ export default function AnnouncementsPage() {
     }
   };
 
-  /* submit */
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editing) return;
@@ -137,24 +127,19 @@ export default function AnnouncementsPage() {
 
     try {
       if (editing.id) {
-        // ----- EDIT -----
-        // send update (no response body expected)
         await api.put(`/announcements/${editing.id}`, {
           title: editing.title.trim(),
           message: editing.message.trim(),
         });
 
-        // find the original announcement to pull its teacherId & createdAt
         const original = announcements.find((a) => a.id === editing.id)!;
 
-        // merge fallback: overwrite title/message, preserve everything else
         const updated: Announcement = {
           ...original,
           title: editing.title.trim(),
           message: editing.message.trim(),
         };
 
-        // replace in state & re-sort
         setAnnouncements((curr) =>
           curr
             .map((a) => (a.id === updated.id ? updated : a))
@@ -164,7 +149,6 @@ export default function AnnouncementsPage() {
             )
         );
       } else {
-        // ----- CREATE -----
         const res = await api.post<Announcement>("/announcements", {
           title: editing.title.trim(),
           message: editing.message.trim(),
@@ -217,10 +201,8 @@ export default function AnnouncementsPage() {
           {announcements.map((a) => (
             <li
               key={a.id}
-              /* gap-3 just adds a little breathing room between the two columns */
               className="list-group-item d-flex align-items-start gap-3"
             >
-              {/* ---------- text column ---------- */}
               <div className="flex-grow-1 text-break" style={{ minWidth: 0 }}>
                 <div className="fw-semibold">{a.title}</div>
                 <small className="text-muted">
@@ -229,7 +211,6 @@ export default function AnnouncementsPage() {
                 <p className="mb-1 mt-2">{a.message}</p>
               </div>
 
-              {/* ---------- actions ---------- */}
               {isTeacher && a.teacherId === teacherId && (
                 <div className="d-flex flex-column gap-1 align-items-end flex-shrink-0">
                   <button
@@ -260,7 +241,6 @@ export default function AnnouncementsPage() {
         />
       )}
 
-      {/* ---------- Modal ---------- */}
       {formOpen && editing && (
         <div
           className="modal fade show d-block"

@@ -1,4 +1,3 @@
-// File: pages/messages/ThreadMessagesPage.tsx
 import { useEffect, useRef, useState, useCallback } from "react";
 import { useParams } from "react-router-dom";
 import dayjs from "dayjs";
@@ -7,7 +6,6 @@ import { useAuth } from "../auth/AuthProvider";
 import ConfirmDeleteModal from "../components/ConfirmDeleteModal";
 import { buildConnection } from "../api/signalr";
 
-/* ---------- Types ---------- */
 type Message = {
   id: number;
   threadId: number;
@@ -27,7 +25,6 @@ type Guardian = {
   user: { firstName: string; middleName?: string; lastName: string };
 };
 
-/* ---------- Consts / utils ---------- */
 const TAKE = 50;
 const fullName = (u: {
   firstName: string;
@@ -35,15 +32,13 @@ const fullName = (u: {
   lastName: string;
 }) => [u.firstName, u.middleName, u.lastName].filter(Boolean).join(" ");
 
-/* ---------- Component ---------- */
 export default function ThreadMessagesPage() {
   const { threadId } = useParams();
   const { user } = useAuth();
   const currentUserId = user?.id;
   const schoolId = user?.schoolId;
-  const currentRole = user?.role; // "Teacher" | "Guardian"
+  const currentRole = user?.role;
 
-  /* ---------- state ---------- */
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -62,11 +57,9 @@ export default function ThreadMessagesPage() {
     y: number;
   } | null>(null);
 
-  /* ---------- refs ---------- */
   const listRef = useRef<HTMLDivElement>(null);
   const didInitialScroll = useRef(false);
 
-  /* ---------- helpers ---------- */
   const scrollToBottom = useCallback((smooth = false) => {
     const el = listRef.current;
     if (el)
@@ -82,9 +75,6 @@ export default function ThreadMessagesPage() {
     return el.scrollHeight - el.scrollTop - el.clientHeight < 120;
   };
 
-  /** Scroll only if the reader is already near the bottom */
-
-  /* ---------- companion fetch ---------- */
   useEffect(() => {
     if (!threadId) return;
     (async () => {
@@ -107,7 +97,6 @@ export default function ThreadMessagesPage() {
     })();
   }, [threadId, currentRole, schoolId]);
 
-  /* ---------- SignalR ---------- */
   useEffect(() => {
     if (!threadId) return;
 
@@ -118,14 +107,12 @@ export default function ThreadMessagesPage() {
       .then(() => connection.invoke("JoinThread", Number(threadId)))
       .catch(console.error);
 
-    // new msg
     connection.on("ReceiveMessage", (msg: Message) => {
       const shouldStick = msg.senderUserId === currentUserId || nearBottom();
 
       setMessages((prev) => [...prev, msg]);
 
       if (msg.senderUserId !== currentUserId) {
-        // optimistic read + server notify
         api
           .patch(`/threads/${threadId}/messages/${msg.id}`, {})
           .catch(console.error);
@@ -139,27 +126,23 @@ export default function ThreadMessagesPage() {
       }
     });
 
-    // read ack
     connection.on("MessageRead", (id: number) =>
       setMessages((p) =>
         p.map((m) => (m.id === id ? { ...m, isRead: true } : m))
       )
     );
 
-    // delete ack ---------------------------------------------------------
     connection.on("MessageDeleted", (id: number) => {
-      const atBottom = nearBottom(); // ⇢ add
-      setMessages((prev) => prev.filter((m) => m.id !== id)); // (unchanged)
+      const atBottom = nearBottom();
+      setMessages((prev) => prev.filter((m) => m.id !== id));
       if (atBottom) {
-        requestAnimationFrame(() => scrollToBottom(false)); // after paint
+        requestAnimationFrame(() => scrollToBottom(false));
       }
     });
-    // ---------------------------------------------------------------------
 
     return () => void connection.stop();
   }, [threadId, currentUserId, scrollToBottom]);
 
-  /* ---------- fetch helpers ---------- */
   const fetchBatch = async (beforeId?: number) => {
     const params = new URLSearchParams({ take: TAKE.toString() });
     if (beforeId) params.append("beforeId", beforeId.toString());
@@ -169,7 +152,6 @@ export default function ThreadMessagesPage() {
     return r.data;
   };
 
-  /* ---------- initial load ---------- */
   useEffect(() => {
     if (!threadId) return;
 
@@ -202,15 +184,13 @@ export default function ThreadMessagesPage() {
     })();
   }, [threadId, currentUserId]);
 
-  /* ---------- scroll once after first batch ---------- */
   useEffect(() => {
     if (!loading && !didInitialScroll.current) {
       scrollToBottom(false);
-      didInitialScroll.current = true; // remember we’ve done it
+      didInitialScroll.current = true;
     }
   }, [loading, scrollToBottom]);
 
-  /* ---------- prepend older ---------- */
   useEffect(() => {
     const el = listRef.current;
     if (!el) return;
@@ -251,7 +231,6 @@ export default function ThreadMessagesPage() {
     return () => el.removeEventListener("scroll", onScroll);
   }, [messages, hasMore]);
 
-  /* ---------- helpers ---------- */
   const isOwn = (m: Message) => m.senderUserId === currentUserId;
 
   const handleSend = async () => {
@@ -269,14 +248,11 @@ export default function ThreadMessagesPage() {
 
   const handleDelete = async (id: number) => {
     const atBottom = nearBottom();
-    // local UX feel – hide ASAP; server broadcast covers the rest / companion
     setMessages((p) => p.filter((m) => m.id !== id));
     if (atBottom) scrollToBottom(false);
     await api.delete(`/threads/${threadId}/messages/${id}`);
-    // SignalR "MessageDeleted" is idempotent – no harm if it arrives after.
   };
 
-  /* ---------- render ---------- */
   return (
     <div
       className="d-flex flex-column"
@@ -291,7 +267,6 @@ export default function ThreadMessagesPage() {
         </div>
       )}
 
-      {/* LIST */}
       <div
         ref={listRef}
         className="flex-grow-1 overflow-auto px-3 pt-3 pb-0"
@@ -353,7 +328,6 @@ export default function ThreadMessagesPage() {
           })
         )}
 
-        {/* bubble context-menu */}
         {ctx && (
           <ul
             className="list-group position-fixed shadow"
@@ -371,7 +345,6 @@ export default function ThreadMessagesPage() {
         )}
       </div>
 
-      {/* INPUT */}
       <div className="border-top p-3 flex-shrink-0">
         <div className="input-group">
           <input
@@ -397,7 +370,6 @@ export default function ThreadMessagesPage() {
         </div>
       </div>
 
-      {/* delete confirm */}
       {deletingId !== null && (
         <ConfirmDeleteModal
           title="Delete Message"

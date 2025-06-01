@@ -7,7 +7,7 @@ import ConfirmDeleteModal from "../../components/ConfirmDeleteModal";
 
 type Teacher = {
   id: number;
-  dateOfBirth: string; // "YYYY-MM-DD"
+  dateOfBirth: string;
   user: {
     firstName: string;
     middleName?: string;
@@ -43,7 +43,6 @@ export default function TeachersPage() {
   const [teacherToDelete, setTeacherToDelete] = useState<Teacher | null>(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
 
-  // sort by lastName then firstName
   const compareTeachers = (a: Teacher, b: Teacher) =>
     a.user.lastName.localeCompare(b.user.lastName) ||
     a.user.firstName.localeCompare(b.user.firstName);
@@ -73,7 +72,7 @@ export default function TeachersPage() {
     });
 
   const handleDeleteClick = (teacher: Teacher) => {
-    setDeleteError(null); // clear previous error
+    setDeleteError(null);
     setTeacherToDelete(teacher);
     setShowDeleteModal(true);
   };
@@ -82,7 +81,6 @@ export default function TeachersPage() {
     if (!teacherToDelete || !schoolId) return;
     try {
       await api.delete(`/schools/${schoolId}/teachers/${teacherToDelete.id}`);
-      // remove from state
       setTeachers((curr) => curr.filter((t) => t.id !== teacherToDelete.id));
       setDeleteError(null);
     } catch {
@@ -118,7 +116,6 @@ export default function TeachersPage() {
 
     try {
       if (editing?.id) {
-        // — EDIT —
         await api.put(`/schools/${schoolId}/teachers/${editing.id}`, dto);
 
         const original = teachers.find((t) => t.id === editing.id)!;
@@ -140,7 +137,6 @@ export default function TeachersPage() {
             .sort(compareTeachers)
         );
       } else {
-        // — CREATE —
         const res = await api.post<{
           id: number;
           username: string;
@@ -219,7 +215,6 @@ export default function TeachersPage() {
         </ul>
       )}
 
-      {/* Modal for Create/Edit */}
       {formOpen && editing && (
         <div
           className="modal fade show d-block"

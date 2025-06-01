@@ -1,5 +1,3 @@
-// src/types/roles.ts
-
 export enum UserRole {
   Owner = "SchoolOwner",
   Admin = "SchoolAdmin",
@@ -8,7 +6,6 @@ export enum UserRole {
   Guardian = "Guardian",
 }
 
-// Optional: full list as array
 export const ALL_ROLES: UserRole[] = [
   UserRole.Owner,
   UserRole.Admin,

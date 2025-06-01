@@ -33,7 +33,6 @@ export default function GradingPage() {
 
   return (
     <div className="d-flex min-vh-100">
-      {/* Sidebar */}
       <div className="bg-light border-end" style={{ width: "250px" }}>
         <StudentSelector
           students={students}
@@ -42,7 +41,6 @@ export default function GradingPage() {
         />
       </div>
 
-      {/* Main panel */}
       <div className="flex-grow-1 p-4 overflow-auto">
         {selectedStudentId ? (
           <StudentResults

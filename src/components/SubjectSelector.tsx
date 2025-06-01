@@ -1,4 +1,3 @@
-// File: components/SubjectSelector.tsx
 type Subject = {
   id: number;
   name: string;

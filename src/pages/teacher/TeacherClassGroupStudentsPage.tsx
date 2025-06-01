@@ -1,4 +1,3 @@
-// File: pages/teacher/TeacherClassGroupStudentsPage.tsx
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { api } from "../../api/client";

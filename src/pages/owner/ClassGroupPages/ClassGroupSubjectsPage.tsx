@@ -1,4 +1,3 @@
-// src/pages/owner/ClassGroupPages/ClassGroupSubjectsPage.tsx
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { api } from "../../../api/client";
@@ -47,7 +46,6 @@ export default function ClassGroupSubjectsPage() {
 
   useEffect(load, [schoolId, groupId]);
 
-  /* ---------- Add subject ---------- */
   const handleAdd = async () => {
     setErrors([]);
     if (!selectedId) return;
@@ -68,7 +66,6 @@ export default function ClassGroupSubjectsPage() {
     }
   };
 
-  /* ---------- Remove subject (un-assign) ---------- */
   const queueRemoveSubject = (subjectId: number) =>
     setConfirm({
       title: "Remove Subject",
@@ -82,7 +79,6 @@ export default function ClassGroupSubjectsPage() {
       },
     });
 
-  /* ---------- Delete all student records for subject ---------- */
   const queueDeleteRecords = (subjectId: number) =>
     setConfirm({
       title: "Delete All Records",
@@ -96,7 +92,6 @@ export default function ClassGroupSubjectsPage() {
       },
     });
 
-  /* ---------- Modal helpers ---------- */
   const handleConfirm = async () => {
     if (!confirm) return;
     try {
@@ -109,12 +104,10 @@ export default function ClassGroupSubjectsPage() {
 
   return (
     <div>
-      {/* Heading */}
       <div className="d-flex justify-content-center align-items-center mb-3">
         <h5 className="mb-0 text-center">Class Group Subjects</h5>
       </div>
 
-      {/* Add-subject control */}
       <div className="mb-3 d-flex gap-2">
         <select
           className="form-select"
@@ -172,7 +165,6 @@ export default function ClassGroupSubjectsPage() {
         </ul>
       )}
 
-      {/* Shared confirmation modal */}
       {confirm && (
         <ConfirmDeleteModal
           title={confirm.title}

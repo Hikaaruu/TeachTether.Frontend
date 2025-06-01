@@ -1,16 +1,14 @@
-// File: pages/owner/SchoolAnnouncementsPage.tsx
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import dayjs from "dayjs";
 import { api } from "../../api/client";
 
-/* ---------- TYPES from backend ---------- */
 type Announcement = {
   id: number;
   teacherId: number;
   title: string;
   message: string;
-  createdAt: string; // ISO string coming from API
+  createdAt: string;
 };
 
 export default function SchoolAnnouncementsPage() {
@@ -18,7 +16,6 @@ export default function SchoolAnnouncementsPage() {
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [loading, setLoading] = useState(true);
 
-  /* ---------- fetch ---------- */
   const load = () => {
     setLoading(true);
     api
@@ -37,7 +34,6 @@ export default function SchoolAnnouncementsPage() {
 
   useEffect(load, [schoolId]);
 
-  /* ---------- render ---------- */
   return (
     <div>
       <div className="text-center mb-3">

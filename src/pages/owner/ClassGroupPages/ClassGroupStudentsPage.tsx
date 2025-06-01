@@ -1,4 +1,3 @@
-// src/pages/owner/ClassGroupStudentsPage.tsx
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { api } from "../../../api/client";
@@ -84,7 +83,6 @@ export default function ClassGroupStudentsPage() {
         <h5 className="mb-0">Class Group Students</h5>
       </div>
 
-      {/* Add student */}
       <div className="mb-3 d-flex gap-2">
         <select
           className="form-select"
@@ -109,7 +107,6 @@ export default function ClassGroupStudentsPage() {
 
       <ValidationErrorList messages={errors} />
 
-      {/* Current class students */}
       {loading ? (
         <p>Loading...</p>
       ) : classStudents.length === 0 ? (

@@ -1,4 +1,3 @@
-// src/api/signalr.ts
 import * as signalR from "@microsoft/signalr";
 import { getToken } from "../auth/tokenStorage";
 

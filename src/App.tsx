@@ -1,4 +1,3 @@
-// src/App.tsx
 import "bootstrap/dist/css/bootstrap.min.css";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "./auth/AuthProvider";
@@ -10,19 +9,11 @@ import Forbidden from "./pages/Forbidden";
 import StartupRedirect from "./pages/StartupRedirect";
 import { UserRole } from "./types/roles";
 import ProfilePage from "./pages/ProfilePage";
-
-// Layouts
 import OwnerLayout from "./layouts/OwnerLayout";
 import AdminLayout from "./layouts/AdminLayout";
 import TeacherLayout from "./layouts/TeacherLayout";
 import GuardianLayout from "./layouts/GuardianLayout";
 import StudentLayout from "./layouts/StudentLayout";
-
-// // Owner pages
-// import OwnerDashboard from './pages/owner/OwnerDashboard';
-// import ManageSchools from './pages/owner/ManageSchools';
-// import ManageTeachers from './pages/owner/ManageTeachers';
-// import ManageStudents from './pages/owner/ManageStudents';
 import SchoolsPage from "./pages/owner/SchoolsPage";
 import SchoolDashboard from "./pages/owner/SchoolDashboard";
 import AdminsPage from "./pages/owner/AdminsPage";
@@ -35,10 +26,7 @@ import ClassGroupDashboard from "./pages/owner/ClassGroupDashboard";
 import ClassGroupStudentsPage from "./pages/owner/ClassGroupPages/ClassGroupStudentsPage";
 import ClassGroupSubjectsPage from "./pages/owner/ClassGroupPages/ClassGroupSubjectsPage";
 import ClassGroupClassAssignmentsPage from "./pages/owner/ClassGroupPages/ClassGroupClassAssignmentsPage";
-// // Admin pages
 import AdminStartup from "./pages/admin/AdminStartup";
-
-// // Teacher pages
 import TeacherAssignmentsPage from "./pages/teacher/TeacherAssignmentsPage";
 import GradingPage from "./pages/teacher/GradingPage";
 import TeacherClassGroupsPage from "./pages/teacher/TeacherClassGroupsPage";
@@ -52,13 +40,6 @@ import GuardianStudentsPage from "./pages/guardian/GuardianStudentsPage";
 import SchoolAnnouncementsPage from "./pages/owner/SchoolAnnouncementsPage";
 import StudentStartup from "./pages/student/StudentStartup";
 
-// // Guardian pages
-// import GuardianDashboard from './pages/guardian/GuardianDashboard';
-// import ViewStudentResults from './pages/guardian/ViewStudentResults';
-
-// // Student pages
-// import StudentDashboard from './pages/student/StudentDashboard';
-
 export default function App() {
   return (
     <AuthProvider>
@@ -67,7 +48,6 @@ export default function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Regiser />} />
 
-          {/* School Owner */}
           <Route element={<ProtectedRoute allow={[UserRole.Owner]} />}>
             <Route path="/owner" element={<OwnerLayout />}>
               <Route index element={<Navigate to="schools" replace />} />
@@ -101,7 +81,6 @@ export default function App() {
             </Route>
           </Route>
 
-          {/* School Admin */}
           <Route element={<ProtectedRoute allow={[UserRole.Admin]} />}>
             <Route path="/admin" element={<AdminLayout />}>
               <Route index element={<AdminStartup />} />
@@ -134,7 +113,6 @@ export default function App() {
             </Route>
           </Route>
 
-          {/* Teacher */}
           <Route element={<ProtectedRoute allow={[UserRole.Teacher]} />}>
             <Route path="/teacher" element={<TeacherLayout />}>
               <Route path="profile" element={<ProfilePage />} />
@@ -166,7 +144,6 @@ export default function App() {
             </Route>
           </Route>
 
-          {/* Guardian */}
           <Route element={<ProtectedRoute allow={[UserRole.Guardian]} />}>
             <Route path="/guardian" element={<GuardianLayout />}>
               <Route index element={<Navigate to="students" replace />} />
@@ -189,7 +166,6 @@ export default function App() {
             </Route>
           </Route>
 
-          {/* Student */}
           <Route element={<ProtectedRoute allow={[UserRole.Student]} />}>
             <Route path="/student" element={<StudentLayout />}>
               <Route index element={<StudentStartup />} />
@@ -206,7 +182,6 @@ export default function App() {
             </Route>
           </Route>
 
-          {/* Fallback */}
           <Route path="/404" element={<NotFound />} />
           <Route path="/403" element={<Forbidden />} />
           <Route path="*" element={<Navigate to="/404" replace />} />

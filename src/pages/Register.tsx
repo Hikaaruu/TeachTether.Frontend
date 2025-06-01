@@ -29,7 +29,7 @@ export default function Register() {
 
   const onSubmit = async (data: RegisterForm) => {
     try {
-      setValidationErrors([]); // clear old errors
+      setValidationErrors([]);
       const { confirmPassword, middleName, ...rest } = data;
       const dto = {
         ...rest,
@@ -56,9 +56,7 @@ export default function Register() {
 
         <form onSubmit={handleSubmit(onSubmit)}>
           <div className="row">
-            {/* Left Column */}
             <div className="col-md-6">
-              {/* Username */}
               <div className="mb-3">
                 <label className="form-label">Username</label>
                 <input
@@ -71,8 +69,6 @@ export default function Register() {
                   <div className="invalid-feedback">Username is required</div>
                 )}
               </div>
-
-              {/* Email */}
               <div className="mb-3">
                 <label className="form-label">Email</label>
                 <input
@@ -84,8 +80,6 @@ export default function Register() {
                   <div className="invalid-feedback">Email is required</div>
                 )}
               </div>
-
-              {/* Password */}
               <div className="mb-3">
                 <label className="form-label">Password</label>
                 <input
@@ -100,7 +94,6 @@ export default function Register() {
                 )}
               </div>
 
-              {/* Confirm Password */}
               <div className="mb-3">
                 <label className="form-label">Confirm Password</label>
                 <input
@@ -122,9 +115,7 @@ export default function Register() {
               </div>
             </div>
 
-            {/* Right Column */}
             <div className="col-md-6">
-              {/* First Name */}
               <div className="mb-3">
                 <label className="form-label">First Name</label>
                 <input
@@ -138,13 +129,11 @@ export default function Register() {
                 )}
               </div>
 
-              {/* Middle Name */}
               <div className="mb-3">
                 <label className="form-label">Middle Name (optional)</label>
                 <input className="form-control" {...register("middleName")} />
               </div>
 
-              {/* Last Name */}
               <div className="mb-3">
                 <label className="form-label">Last Name</label>
                 <input
@@ -158,7 +147,6 @@ export default function Register() {
                 )}
               </div>
 
-              {/* Sex */}
               <div className="mb-3">
                 <label className="form-label">Sex</label>
                 <select
@@ -176,7 +164,6 @@ export default function Register() {
             </div>
           </div>
 
-          {/* Submit */}
           <button
             type="submit"
             className="btn btn-success w-100 mt-2"
@@ -187,7 +174,6 @@ export default function Register() {
           <ValidationErrorList messages={validationErrors} />
         </form>
 
-        {/* Link to Login */}
         <div className="text-center mt-3">
           <button
             type="button"

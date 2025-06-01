@@ -63,9 +63,7 @@ export default function SchoolsPage() {
       setShowDeleteModal(false);
       setSchoolToDelete(null);
       loadSchools();
-    } catch {
-      // Optional: show error feedback
-    }
+    } catch {}
   };
 
   const handleCancelDelete = () => {
@@ -165,7 +163,6 @@ export default function SchoolsPage() {
         </ul>
       )}
 
-      {/* Create Modal */}
       {showCreateModal && (
         <SchoolModal
           title="Create School"
@@ -178,7 +175,6 @@ export default function SchoolsPage() {
         />
       )}
 
-      {/* Edit Modal */}
       {showEditModal && (
         <SchoolModal
           title="Edit School"
@@ -191,7 +187,6 @@ export default function SchoolsPage() {
         />
       )}
 
-      {/* Delete Confirmation Modal */}
       {showDeleteModal && schoolToDelete && (
         <ConfirmDeleteModal
           title="Delete School"
@@ -204,7 +199,6 @@ export default function SchoolsPage() {
   );
 }
 
-// Reusable modal component (inline for simplicity)
 type ModalProps = {
   title: string;
   onClose: () => void;

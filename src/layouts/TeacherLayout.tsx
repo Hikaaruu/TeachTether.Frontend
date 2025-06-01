@@ -7,7 +7,6 @@ export default function TeacherLayout() {
 
   return (
     <div className="bg-light min-vh-100 d-flex flex-column">
-      {/* Top Navbar */}
       <nav className="navbar navbar-expand-lg navbar-light bg-white border-bottom shadow-sm px-4 py-2">
         <span className="navbar-brand fw-bold text-primary">TeachTether</span>
 
@@ -48,7 +47,6 @@ export default function TeacherLayout() {
         </div>
       </nav>
 
-      {/* Page Content */}
       <main className="container py-4 flex-grow-1">
         <Outlet />
       </main>

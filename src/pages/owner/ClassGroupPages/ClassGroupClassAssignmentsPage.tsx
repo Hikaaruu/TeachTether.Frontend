@@ -130,7 +130,6 @@ export default function ClassGroupClassAssignmentsPage() {
               <Accordion.Item eventKey={idx.toString()} key={subject.id}>
                 <Accordion.Header>{subject.name}</Accordion.Header>
                 <Accordion.Body>
-                  {/* Add Teacher */}
                   <div className="d-flex gap-2 mb-3">
                     <Form.Select
                       value={selectedTeacherIds[subject.id] || ""}
@@ -157,7 +156,6 @@ export default function ClassGroupClassAssignmentsPage() {
                     </Button>
                   </div>
 
-                  {/* Assigned Teachers */}
                   {assigned.length === 0 ? (
                     <p className="text-muted mb-0">No teachers assigned.</p>
                   ) : (

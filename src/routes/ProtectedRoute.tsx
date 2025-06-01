@@ -9,7 +9,7 @@ type ProtectedRouteProps = {
 export const ProtectedRoute = ({ allow }: ProtectedRouteProps) => {
   const { user, ready } = useAuth();
 
-  if (!ready) return null; // optionally return loading spinner
+  if (!ready) return null;
 
   if (!user) return <Navigate to="/login" replace />;
 

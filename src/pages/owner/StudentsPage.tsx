@@ -1,4 +1,3 @@
-// src/pages/owner/StudentsPage.tsx
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { api } from "../../api/client";
@@ -41,7 +40,6 @@ export default function StudentsPage() {
   const [studentToDelete, setStudentToDelete] = useState<Student | null>(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
 
-  // just above your StudentsPage component
   const compareStudents = (a: Student, b: Student) =>
     a.user.lastName.localeCompare(b.user.lastName) ||
     a.user.firstName.localeCompare(b.user.firstName);
@@ -78,10 +76,8 @@ export default function StudentsPage() {
     if (!studentToDelete || !schoolId) return;
     try {
       await api.delete(`/schools/${schoolId}/students/${studentToDelete.id}`);
-      // remove from state
       setStudents((curr) => curr.filter((s) => s.id !== studentToDelete.id));
     } catch {
-      // Optional: toast
     } finally {
       setShowDeleteModal(false);
       setStudentToDelete(null);
@@ -111,10 +107,8 @@ export default function StudentsPage() {
 
     try {
       if (editing?.id) {
-        // — EDIT —
         await api.put(`/schools/${schoolId}/students/${editing.id}`, dto);
 
-        // merge into existing student
         const original = students.find((s) => s.id === editing.id)!;
         const updated: Student = {
           ...original,
@@ -134,7 +128,6 @@ export default function StudentsPage() {
             .sort(compareStudents)
         );
       } else {
-        // — CREATE —
         const res = await api.post<{
           id: number;
           username: string;
@@ -143,13 +136,11 @@ export default function StudentsPage() {
           dateOfBirth: string;
         }>(`/schools/${schoolId}/students`, dto);
 
-        // show credentials
         setCreds({
           username: res.data.username,
           password: res.data.password,
         });
 
-        // prepend new student
         const created: Student = {
           id: res.data.id,
           user: res.data.user,
@@ -217,7 +208,6 @@ export default function StudentsPage() {
         </ul>
       )}
 
-      {/* ----- Create / Edit Modal ----- */}
       {formOpen && editing && (
         <div
           className="modal fade show d-block"
@@ -315,7 +305,6 @@ export default function StudentsPage() {
         </div>
       )}
 
-      {/* ----- Credentials Modal ----- */}
       {creds && (
         <CredentialsModal
           username={creds.username}
@@ -324,7 +313,6 @@ export default function StudentsPage() {
         />
       )}
 
-      {/* ----- Delete Confirmation Modal ----- */}
       {showDeleteModal && studentToDelete && (
         <ConfirmDeleteModal
           title="Delete Student"

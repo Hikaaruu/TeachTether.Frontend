@@ -1,4 +1,3 @@
-// File: components/StudentResults.tsx
 import { useEffect, useState } from "react";
 import dayjs from "dayjs";
 import { api } from "../api/client";
@@ -7,7 +6,6 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../auth/AuthProvider";
 import ConfirmDeleteModal from "../components/ConfirmDeleteModal";
 
-/* ---------- props & record types ---------- */
 interface Props {
   schoolId: string;
   subjectId: string;
@@ -38,7 +36,6 @@ interface Attendance {
   teacherName: string;
 }
 
-/* ---------- enums (keep UI & DTO in sync) ---------- */
 const gradeTypeOptions = [
   "Exam",
   "Quiz",
@@ -61,16 +58,14 @@ const statusBadge = (s: string) =>
     Absent: "bg-danger",
     Late: "bg-warning text-dark",
     Excused: "bg-info text-dark",
-  }[s] ?? "bg-secondary");
+  })[s] ?? "bg-secondary";
 
-/* ---------- component ---------- */
 export default function StudentResults({
   schoolId,
   subjectId,
   studentId,
   editable = false,
 }: Props) {
-  /* ---- data state ---- */
   const navigate = useNavigate();
   const [grades, setGrades] = useState<Grade[]>([]);
   const [behavior, setBehavior] = useState<Behavior[]>([]);
@@ -86,8 +81,7 @@ export default function StudentResults({
   } | null>(null);
   const { user } = useAuth();
 
-  const analyticsBasePath = user?.role.toLowerCase(); // "teacher", "guardian", etc.
-  /* ---- modal state ---- */
+  const analyticsBasePath = user?.role.toLowerCase();
   type FormKind = "grade" | "behavior" | "attendance";
   const [formKind, setFormKind] = useState<FormKind | null>(null);
   const [editing, setEditing] = useState<Grade | Behavior | Attendance | null>(
@@ -95,7 +89,6 @@ export default function StudentResults({
   );
   const [formOpen, setFormOpen] = useState(false);
 
-  /* ---- fetch helpers ---- */
   const load = async () => {
     setLoading(true);
     try {
@@ -149,7 +142,6 @@ export default function StudentResults({
     if (studentId && subjectId) load();
   }, [studentId, subjectId]);
 
-  /* ---------- modal open helpers ---------- */
   const openCreate = (kind: FormKind) => {
     setErrors([]);
     setEditing(null);
@@ -163,7 +155,6 @@ export default function StudentResults({
     setFormOpen(true);
   };
 
-  /* ---------- modal submit ---------- */
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrors([]);
@@ -194,13 +185,11 @@ export default function StudentResults({
               dto
             );
 
-        // if PUT returns 204, res.data will be empty → merge edit + dto
         const returned = res.data as Grade;
         const saved: Grade =
           returned && typeof returned.id === "number"
             ? returned
             : {
-                // fallback: merge your edit + dto
                 ...(editing as Grade),
                 ...dto,
                 id: (editing as Grade).id,
@@ -211,7 +200,6 @@ export default function StudentResults({
           const arr = editing
             ? curr.map((g) => (g.id === saved.id ? (saved as Grade) : g))
             : [saved as Grade, ...curr];
-          // sort descending by gradeDate
           return arr.sort(
             (a, b) =>
               dayjs((b as Grade).gradeDate).valueOf() -
@@ -260,7 +248,6 @@ export default function StudentResults({
           );
         });
       } else {
-        // attendance
         const base = {
           subjectId: +subjectId,
           status: form.status.value,
@@ -305,7 +292,6 @@ export default function StudentResults({
         });
       }
 
-      // close modal
       setFormOpen(false);
       setEditing(null);
     } catch (err: any) {
@@ -318,13 +304,10 @@ export default function StudentResults({
     }
   };
 
-  /* ---------- delete ---------- */
   const handleDeleteRequest = (kind: FormKind, id: number) => {
     setDelTarget({ kind, id });
     setDelModalOpen(true);
   };
-
-  // inside StudentResults component
 
   const confirmDelete = async () => {
     if (!delTarget) return;
@@ -334,15 +317,14 @@ export default function StudentResults({
       kind === "grade"
         ? "grades"
         : kind === "behavior"
-        ? "behavior"
-        : "attendance";
+          ? "behavior"
+          : "attendance";
 
     try {
       await api.delete(
         `/schools/${schoolId}/students/${studentId}/${urlPart}/${id}`
       );
 
-      // remove from local state instead of re-loading
       if (kind === "grade") {
         setGrades((curr) => curr.filter((g) => g.id !== id));
       } else if (kind === "behavior") {
@@ -351,7 +333,6 @@ export default function StudentResults({
         setAttendance((curr) => curr.filter((a) => a.id !== id));
       }
     } catch (err: any) {
-      // you can surfacing an error here if you like
       console.error("Delete failed", err);
       setErrors(["Failed to delete record."]);
     } finally {
@@ -365,7 +346,6 @@ export default function StudentResults({
     setDelTarget(null);
   };
 
-  /* ---------- render ---------- */
   return (
     <div className="container-fluid">
       <div className="d-flex justify-content-between align-items-center mb-4">
@@ -391,7 +371,6 @@ export default function StudentResults({
         <p>Loading...</p>
       ) : (
         <>
-          {/* ---------- GRADES ---------- */}
           <RecordSection
             title="Grades"
             data={grades}
@@ -399,13 +378,11 @@ export default function StudentResults({
             onAdd={() => openCreate("grade")}
             render={(g: Grade) => (
               <div className="w-100">
-                {/* badge ——— score ——— date (spaced with ms-4 / ps-4) */}
                 <div className="d-flex align-items-center">
                   <span className="badge bg-secondary flex-shrink-0">
                     {g.gradeType}
                   </span>
                   <span className="ms-3">{g.gradeValue}/100</span>{" "}
-                  {/* ➜ ms-4 */}
                   <small className="text-muted ms-auto me-2 ps-3">
                     Date: {dateFmt(g.gradeDate)}
                   </small>
@@ -426,7 +403,6 @@ export default function StudentResults({
             onDelete={(g) => handleDeleteRequest("grade", g.id)}
           />
 
-          {/* ---------- BEHAVIOR ---------- */}
           <RecordSection
             title="Behavior"
             data={behavior}
@@ -459,7 +435,6 @@ export default function StudentResults({
             onDelete={(b) => handleDeleteRequest("behavior", b.id)}
           />
 
-          {/* ---------- ATTENDANCE ---------- */}
           <RecordSection
             title="Attendance"
             data={attendance}
@@ -504,7 +479,6 @@ export default function StudentResults({
         />
       )}
 
-      {/* ---------- modal ---------- */}
       {formOpen && formKind && (
         <div
           className="modal fade show d-block"
@@ -565,7 +539,6 @@ export default function StudentResults({
   );
 }
 
-/* ---------- generic record list section ---------- */
 type SectionProps<T> = {
   title: string;
   data: T[];
@@ -606,7 +579,7 @@ function RecordSection<T extends { id: number }>({
                 className="list-group-item d-flex justify-content-between align-items-start"
               >
                 <div
-                  className="flex-grow-1 overflow-hidden" // ⬅ keeps cell from widening
+                  className="flex-grow-1 overflow-hidden"
                   style={{ minWidth: 0 }}
                 >
                   {render(item)}
@@ -636,7 +609,6 @@ function RecordSection<T extends { id: number }>({
   );
 }
 
-/* ---------- modal form render helpers ---------- */
 const renderGradeForm = (g?: Grade) => (
   <>
     <div className="mb-3">
@@ -666,7 +638,6 @@ const renderGradeForm = (g?: Grade) => (
         ))}
       </select>
     </div>
-    {/* Date only when creating */}
     {!g && (
       <div className="mb-3">
         <label className="form-label">Date</label>

@@ -28,7 +28,6 @@ export default function StudentSelector({
 
   return (
     <div className="border-end pe-3">
-      {/* Centered and styled using Bootstrap only */}
       <div className="text-center fw-semibold text-uppercase text-muted mb-2">
         Students
       </div>

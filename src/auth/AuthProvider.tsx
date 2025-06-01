@@ -19,7 +19,7 @@ type UserInfo = {
   sex: string;
   role: UserRole;
   entityId: number;
-  schoolId?: number | null; // <-- added this
+  schoolId?: number | null;
 };
 
 type Credentials = {

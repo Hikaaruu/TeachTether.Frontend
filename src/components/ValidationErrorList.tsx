@@ -1,6 +1,6 @@
 type Props = {
   messages: string[];
-  className?: string; // optional override
+  className?: string;
 };
 
 export default function ValidationErrorList({
