@@ -61,7 +61,7 @@ export default function AnnouncementsPage() {
   const [clsGroups, setClsGroups] = useState<ClassGroup[]>([]);
   const [loading, setLoading] = useState(true);
   const [deletingId, setDeletingId] = useState<number | null>(null);
-
+  const [submitting, setSubmitting] = useState(false);
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<FormState | null>(null);
   const [errors, setErrors] = useState<string[]>([]);
@@ -123,6 +123,8 @@ export default function AnnouncementsPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editing) return;
+    if (submitting) return;
+    setSubmitting(true);
     setErrors([]);
 
     try {
@@ -174,6 +176,8 @@ export default function AnnouncementsPage() {
           ? (Object.values(apiErr).flat() as string[])
           : ["Failed to save announcement."]
       );
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -360,7 +364,7 @@ export default function AnnouncementsPage() {
                     Cancel
                   </button>
                   <button className="btn btn-primary" type="submit">
-                    Save
+                    {submitting ? "Saving…" : "Save"}
                   </button>
                 </div>
               </form>

@@ -54,8 +54,11 @@ export default function ClassGroupSubjectsPage() {
       await api.post(`/schools/${schoolId}/classgroups/${groupId}/subjects`, {
         subjectId: selectedId,
       });
+      const added = allSubjects.find((s) => s.id === selectedId);
+      if (added) {
+        setClassSubjects((prev) => [...prev, added]);
+      }
       setSelectedId("");
-      load();
     } catch (err: any) {
       const apiErr = err?.response?.data?.errors;
       setErrors(
@@ -75,7 +78,7 @@ export default function ClassGroupSubjectsPage() {
         await api.delete(
           `/schools/${schoolId}/classgroups/${groupId}/subjects/${subjectId}`
         );
-        load();
+        setClassSubjects((prev) => prev.filter((s) => s.id !== subjectId));
       },
     });
 
@@ -88,7 +91,6 @@ export default function ClassGroupSubjectsPage() {
         await api.delete(
           `/schools/${schoolId}/StudentRecords/classgroups/${groupId}/subjects/${subjectId}`
         );
-        load();
       },
     });
 
@@ -145,8 +147,13 @@ export default function ClassGroupSubjectsPage() {
               key={s.id}
               className="list-group-item d-flex justify-content-between align-items-center"
             >
-              <div>{s.name}</div>
-              <div className="d-flex gap-2">
+              <div
+                className="flex-grow-1 me-3 text-truncate"
+                style={{ minWidth: 0 }}
+              >
+                {s.name}
+              </div>
+              <div className="d-flex gap-2 flex-shrink-0">
                 <button
                   className="btn btn-sm btn-warning text-dark"
                   onClick={() => queueDeleteRecords(s.id)}

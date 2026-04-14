@@ -143,9 +143,9 @@ export default function ClassGroupsPage() {
                 {teacherLabel(c.homeroomTeacherId)})
               </span>
 
-              <div>
+              <div className="d-flex gap-2 flex-shrink-0">
                 <button
-                  className="btn btn-sm btn-outline-primary me-2"
+                  className="btn btn-sm btn-outline-primary"
                   onClick={() => (setFormOpen(true), openEdit(c))}
                 >
                   Edit

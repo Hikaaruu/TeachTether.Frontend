@@ -49,8 +49,12 @@ export default function ClassGroupStudentsPage() {
       await api.post(`/schools/${schoolId}/classgroups/${groupId}/students`, {
         studentId: selectedId,
       });
+      const added = availableStudents.find((s) => s.id === selectedId);
+      if (added) {
+        setClassStudents((prev) => [...prev, added]);
+        setAvailableStudents((prev) => prev.filter((s) => s.id !== selectedId));
+      }
       setSelectedId("");
-      load();
     } catch (err: any) {
       const apiErr = err?.response?.data?.errors;
       setErrors(
@@ -66,7 +70,11 @@ export default function ClassGroupStudentsPage() {
       await api.delete(
         `/schools/${schoolId}/classgroups/${groupId}/students/${studentId}`
       );
-      load();
+      const removed = classStudents.find((s) => s.id === studentId);
+      if (removed) {
+        setAvailableStudents((prev) => [...prev, removed]);
+      }
+      setClassStudents((prev) => prev.filter((s) => s.id !== studentId));
     } catch {
       alert("Failed to remove student.");
     }
@@ -79,8 +87,8 @@ export default function ClassGroupStudentsPage() {
 
   return (
     <div>
-      <div className="d-flex justify-content-between align-items-center mb-3">
-        <h5 className="mb-0">Class Group Students</h5>
+      <div className="d-flex justify-content-center align-items-center mb-3">
+        <h5 className="mb-0 text-center">Class Group Students</h5>
       </div>
 
       <div className="mb-3 d-flex gap-2">

@@ -38,7 +38,21 @@ type ClassAvg = {
   };
 };
 
-const COLORS = ["#8884d8", "#82ca9d", "#ffc658", "#ff8042"];
+const COLORS = [
+  "#8884d8",
+  "#82ca9d",
+  "#ffc658",
+  "#ff8042",
+  "#8dd1e1",
+  "#a4de6c",
+  "#d0ed57",
+  "#ffbb28",
+  "#e28cf5",
+  "#fa9fb5",
+  "#b3de69",
+  "#bebada",
+];
+
 const dateKey = (iso: string) => dayjs(iso).format("YYYY-MM-DD");
 const round = (v: number, d = 2) => parseFloat(v.toFixed(d));
 
@@ -198,7 +212,7 @@ export default function StudentAnalyticsPage() {
 
   return (
     <div className="d-flex flex-column gap-4">
-      <h3 className="text-center fw-semibold text-primary-emphasis">
+      <h3 className="text-center fw-semibold text-primary-emphasis text-break">
         {studentName} – {subjectName} ({classGroupLabel})
       </h3>
 

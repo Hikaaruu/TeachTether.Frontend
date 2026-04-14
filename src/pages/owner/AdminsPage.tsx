@@ -33,6 +33,7 @@ export default function AdminsPage() {
   const [admins, setAdmins] = useState<SchoolAdmin[]>([]);
   const [loading, setLoading] = useState(true);
   const [formOpen, setFormOpen] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   const [editingAdmin, setEditingAdmin] = useState<FormState | null>(null);
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
   const [createdCredentials, setCreatedCredentials] =
@@ -107,6 +108,8 @@ export default function AdminsPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (submitting) return;
+    setSubmitting(true);
     setValidationErrors([]);
 
     const dto = {
@@ -174,6 +177,8 @@ export default function AdminsPage() {
       } else {
         setValidationErrors(["Failed to save admin."]);
       }
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -197,14 +202,17 @@ export default function AdminsPage() {
               key={admin.id}
               className="list-group-item d-flex justify-content-between align-items-center"
             >
-              <div>
+              <div
+                className="flex-grow-1 me-3 text-truncate"
+                style={{ minWidth: 0 }}
+              >
                 {admin.user.firstName}{" "}
                 {admin.user.middleName && admin.user.middleName + " "}
                 {admin.user.lastName}
               </div>
-              <div>
+              <div className="d-flex gap-2 flex-shrink-0">
                 <button
-                  className="btn btn-sm btn-outline-primary me-2"
+                  className="btn btn-sm btn-outline-primary"
                   onClick={() => handleEdit(admin)}
                 >
                   Edit
@@ -308,7 +316,7 @@ export default function AdminsPage() {
                     Cancel
                   </button>
                   <button type="submit" className="btn btn-primary">
-                    Save
+                    {submitting ? "Saving…" : "Save"}
                   </button>
                 </div>
               </form>

@@ -71,6 +71,7 @@ export default function StudentResults({
   const [behavior, setBehavior] = useState<Behavior[]>([]);
   const [attendance, setAttendance] = useState<Attendance[]>([]);
   const [subjectName, setSubjectName] = useState<string>("");
+  const [submitting, setSubmitting] = useState(false);
   const [errors, setErrors] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [studentName, setStudentName] = useState<string>("");
@@ -157,12 +158,13 @@ export default function StudentResults({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (submitting) return;
+    setSubmitting(true);
     setErrors([]);
 
     try {
       const form = e.target as any;
       let res: any;
-      let saved: Grade | Behavior | Attendance;
 
       if (formKind === "grade") {
         const base = {
@@ -301,6 +303,8 @@ export default function StudentResults({
           ? (Object.values(apiErr).flat() as string[])
           : ["Failed to save record."]
       );
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -349,7 +353,21 @@ export default function StudentResults({
   return (
     <div className="container-fluid">
       <div className="d-flex justify-content-between align-items-center mb-4">
-        <h3 className="fw-semibold text-primary-emphasis mb-0 flex-grow-1 text-center">
+        <h3
+          className="fw-semibold text-primary-emphasis mb-0 flex-grow-1 text-center text-break"
+          style={{
+            minWidth: 0,
+            display: "-webkit-box",
+            WebkitBoxOrient: "vertical",
+            WebkitLineClamp: 2,
+            overflow: "hidden",
+          }}
+          title={
+            studentName && subjectName
+              ? `${studentName} – ${subjectName}`
+              : "Student Results"
+          }
+        >
           {studentName && subjectName
             ? `${studentName} – ${subjectName}`
             : "Student Results"}
@@ -527,7 +545,7 @@ export default function StudentResults({
                     Cancel
                   </button>
                   <button type="submit" className="btn btn-primary">
-                    Save
+                    {submitting ? "Saving…" : "Save"}
                   </button>
                 </div>
               </form>

@@ -34,6 +34,7 @@ export default function TeachersPage() {
   const { id: schoolId } = useParams();
   const [teachers, setTeachers] = useState<Teacher[]>([]);
   const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<FormState | null>(null);
   const [errors, setErrors] = useState<string[]>([]);
@@ -100,6 +101,8 @@ export default function TeachersPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (submitting) return;
+    setSubmitting(true);
     setErrors([]);
 
     const dto = {
@@ -165,6 +168,8 @@ export default function TeachersPage() {
           ? (Object.values(apiErr).flat() as string[])
           : ["Failed to save teacher."]
       );
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -191,14 +196,17 @@ export default function TeachersPage() {
               key={t.id}
               className="list-group-item d-flex justify-content-between align-items-center"
             >
-              <div>
+              <div
+                className="flex-grow-1 me-3 text-truncate"
+                style={{ minWidth: 0 }}
+              >
                 {t.user.firstName}{" "}
                 {t.user.middleName && t.user.middleName + " "}
                 {t.user.lastName}
               </div>
-              <div>
+              <div className="d-flex gap-2 flex-shrink-0">
                 <button
-                  className="btn btn-sm btn-outline-primary me-2"
+                  className="btn btn-sm btn-outline-primary"
                   onClick={() => (setFormOpen(true), openEdit(t))}
                 >
                   Edit
@@ -302,7 +310,7 @@ export default function TeachersPage() {
                     Cancel
                   </button>
                   <button type="submit" className="btn btn-primary">
-                    Save
+                    {submitting ? "Saving…" : "Save"}
                   </button>
                 </div>
               </form>

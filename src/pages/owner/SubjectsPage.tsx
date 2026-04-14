@@ -18,6 +18,7 @@ export default function SubjectsPage() {
   const { id: schoolId } = useParams();
   const [subjects, setSubjects] = useState<Subject[]>([]);
   const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<FormState | null>(null);
   const [errors, setErrors] = useState<string[]>([]);
@@ -63,6 +64,8 @@ export default function SubjectsPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (submitting) return;
+    setSubmitting(true);
     setErrors([]);
 
     const dto = { name: editing!.name.trim() };
@@ -82,6 +85,8 @@ export default function SubjectsPage() {
           ? (Object.values(apiErr).flat() as string[])
           : ["Failed to save subject."]
       );
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -108,10 +113,15 @@ export default function SubjectsPage() {
               key={s.id}
               className="list-group-item d-flex justify-content-between align-items-center"
             >
-              <div>{s.name}</div>
-              <div>
+              <div
+                className="flex-grow-1 me-3 text-truncate"
+                style={{ minWidth: 0 }}
+              >
+                {s.name}
+              </div>
+              <div className="d-flex gap-2 flex-shrink-0">
                 <button
-                  className="btn btn-sm btn-outline-primary me-2"
+                  className="btn btn-sm btn-outline-primary"
                   onClick={() => (setFormOpen(true), openEdit(s))}
                 >
                   Edit
@@ -172,7 +182,7 @@ export default function SubjectsPage() {
                     Cancel
                   </button>
                   <button type="submit" className="btn btn-primary">
-                    Save
+                    {submitting ? "Saving…" : "Save"}
                   </button>
                 </div>
               </form>

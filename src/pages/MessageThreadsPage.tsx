@@ -148,39 +148,45 @@ export default function MessageThreadsPage() {
         <p className="text-muted">No threads yet.</p>
       ) : (
         <ul className="list-group">
-          {threads.map((t) => {
-            const companionId =
-              role === "Guardian" ? t.teacherId : t.guardianId;
-            const compName = companionMap.get(companionId) ?? "Unknown";
-            const compRole = role === "Guardian" ? "Teacher" : "Guardian";
-            return (
-              <li
-                key={t.id}
-                role="button"
-                className="list-group-item d-flex justify-content-between align-items-center"
-                onClick={() => navigate(`${t.id}/messages`)}
-                onMouseOver={(e) =>
-                  (e.currentTarget.style.textDecoration = "underline")
-                }
-                onMouseOut={(e) =>
-                  (e.currentTarget.style.textDecoration = "none")
-                }
-              >
-                <span>
-                  {compRole}: {compName}
-                </span>
-                <button
-                  className="btn btn-sm btn-outline-danger"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleDeleteRequest(t);
-                  }}
+          {threads
+            .filter((t) => {
+              const companionId =
+                role === "Guardian" ? t.teacherId : t.guardianId;
+              return companionMap.has(companionId);
+            })
+            .map((t) => {
+              const companionId =
+                role === "Guardian" ? t.teacherId : t.guardianId;
+              const compName = companionMap.get(companionId) ?? "Unknown";
+              const compRole = role === "Guardian" ? "Teacher" : "Guardian";
+              return (
+                <li
+                  key={t.id}
+                  role="button"
+                  className="list-group-item d-flex justify-content-between align-items-center"
+                  onClick={() => navigate(`${t.id}/messages`)}
+                  onMouseOver={(e) =>
+                    (e.currentTarget.style.textDecoration = "underline")
+                  }
+                  onMouseOut={(e) =>
+                    (e.currentTarget.style.textDecoration = "none")
+                  }
                 >
-                  Delete
-                </button>
-              </li>
-            );
-          })}
+                  <span>
+                    {compRole}: {compName}
+                  </span>
+                  <button
+                    className="btn btn-sm btn-outline-danger"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDeleteRequest(t);
+                    }}
+                  >
+                    Delete
+                  </button>
+                </li>
+              );
+            })}
         </ul>
       )}
 
@@ -219,8 +225,14 @@ export default function MessageThreadsPage() {
                     >
                       <option value="">-- choose --</option>
                       {available.map((c) => (
-                        <option key={c.id} value={c.id}>
-                          {fullName(c.user)}
+                        <option
+                          key={c.id}
+                          value={c.id}
+                          title={fullName(c.user)}
+                        >
+                          {fullName(c.user).length > 35
+                            ? fullName(c.user).slice(0, 35) + "…"
+                            : fullName(c.user)}
                         </option>
                       ))}
                     </select>

@@ -60,7 +60,14 @@ export default function TeacherAssignmentsPage() {
         <Accordion alwaysOpen>
           {Object.entries(grouped).map(([subjectName, entries], idx) => (
             <Accordion.Item eventKey={idx.toString()} key={subjectName}>
-              <Accordion.Header>{subjectName}</Accordion.Header>
+              <Accordion.Header>
+                <span
+                  className="flex-grow-1 text-truncate me-4"
+                  style={{ minWidth: 0 }}
+                >
+                  {subjectName}
+                </span>
+              </Accordion.Header>
               <Accordion.Body>
                 <ul className="list-group">
                   {entries.map((a) => (

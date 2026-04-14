@@ -30,7 +30,17 @@ export default function SubjectSelector({
             role="button"
             onClick={() => onSelect(s.id)}
           >
-            {s.name}
+            <span
+              style={{
+                display: "-webkit-box",
+                WebkitBoxOrient: "vertical",
+                WebkitLineClamp: 2,
+                overflow: "hidden",
+              }}
+              title={s.name}
+            >
+              {s.name}
+            </span>
           </li>
         ))}
       </ul>

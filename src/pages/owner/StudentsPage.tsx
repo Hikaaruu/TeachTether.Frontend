@@ -32,6 +32,7 @@ export default function StudentsPage() {
   const [students, setStudents] = useState<Student[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const [submitting, setSubmitting] = useState(false);
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<FormState | null>(null);
   const [errors, setErrors] = useState<string[]>([]);
@@ -91,6 +92,8 @@ export default function StudentsPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (submitting) return;
+    setSubmitting(true);
     setErrors([]);
 
     const dto = {
@@ -159,6 +162,8 @@ export default function StudentsPage() {
           ? (Object.values(apiErr).flat() as string[])
           : ["Failed to save student."]
       );
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -185,13 +190,16 @@ export default function StudentsPage() {
               key={s.id}
               className="list-group-item d-flex justify-content-between align-items-center"
             >
-              <div>
+              <div
+                className="flex-grow-1 me-3 text-truncate"
+                style={{ minWidth: 0 }}
+              >
                 {s.user.firstName}{" "}
                 {s.user.middleName && s.user.middleName + " "} {s.user.lastName}
               </div>
-              <div>
+              <div className="d-flex gap-2 flex-shrink-0">
                 <button
-                  className="btn btn-sm btn-outline-primary me-2"
+                  className="btn btn-sm btn-outline-primary"
                   onClick={() => (setFormOpen(true), openEdit(s))}
                 >
                   Edit
@@ -296,7 +304,7 @@ export default function StudentsPage() {
                     Cancel
                   </button>
                   <button type="submit" className="btn btn-primary">
-                    Save
+                    {submitting ? "Saving…" : "Save"}
                   </button>
                 </div>
               </form>

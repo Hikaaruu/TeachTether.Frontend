@@ -1,5 +1,3 @@
-import React from "react";
-
 type Student = {
   id: number;
   user: {
@@ -21,6 +19,8 @@ export default function StudentSelector({
   selectedId,
   onSelect,
 }: Props) {
+  const shortName = (s: Student) =>
+    [s.user.firstName, s.user.lastName].filter(Boolean).join(" ");
   const fullName = (s: Student) =>
     [s.user.firstName, s.user.middleName, s.user.lastName]
       .filter(Boolean)
@@ -36,13 +36,23 @@ export default function StudentSelector({
         {students.map((s) => (
           <li
             key={s.id}
-            className={`list-group-item list-group-item-action ${
+            className={`list-group-item list-group-item-action   ${
               s.id === selectedId ? "active" : ""
             }`}
             role="button"
             onClick={() => onSelect(s.id)}
           >
-            {fullName(s)}
+            <span
+              style={{
+                display: "-webkit-box",
+                WebkitBoxOrient: "vertical",
+                WebkitLineClamp: 2,
+                overflow: "hidden",
+              }}
+              title={fullName(s)}
+            >
+              {shortName(s)}
+            </span>
           </li>
         ))}
       </ul>

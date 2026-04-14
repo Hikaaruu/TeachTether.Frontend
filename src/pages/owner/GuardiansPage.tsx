@@ -40,6 +40,7 @@ type CreatedCredentials = { username: string; password: string };
 
 export default function GuardiansPage() {
   const { id: schoolId } = useParams();
+  const [submitting, setSubmitting] = useState(false);
   const [guardians, setGuardians] = useState<Guardian[]>([]);
   const [allStudents, setAllStudents] = useState<Student[]>([]);
   const [guardianStudents, setGuardianStudents] = useState<
@@ -162,6 +163,8 @@ export default function GuardiansPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (submitting) return;
+    setSubmitting(true);
     setErrors([]);
 
     const dto = {
@@ -193,6 +196,8 @@ export default function GuardiansPage() {
           ? (Object.values(apiErr).flat() as string[])
           : ["Failed to save guardian."]
       );
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -217,12 +222,15 @@ export default function GuardiansPage() {
           {guardians.map((g) => (
             <li key={g.id} className="list-group-item">
               <div className="d-flex justify-content-between align-items-center">
-                <div>
+                <div
+                  className="flex-grow-1 me-3 text-truncate"
+                  style={{ minWidth: 0 }}
+                >
                   {g.user.firstName} {g.user.middleName || ""} {g.user.lastName}
                 </div>
-                <div>
+                <div className="d-flex gap-2 flex-shrink-0">
                   <button
-                    className="btn btn-sm btn-outline-primary me-2"
+                    className="btn btn-sm btn-outline-primary"
                     onClick={() => (setFormOpen(true), openEdit(g))}
                   >
                     Edit
@@ -375,7 +383,7 @@ export default function GuardiansPage() {
                     Cancel
                   </button>
                   <button type="submit" className="btn btn-primary">
-                    Save
+                    {submitting ? "Saving…" : "Save"}
                   </button>
                 </div>
               </form>

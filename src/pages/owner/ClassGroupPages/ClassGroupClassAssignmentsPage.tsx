@@ -86,8 +86,14 @@ export default function ClassGroupClassAssignmentsPage() {
           teacherId,
         }
       );
+      const added = teachers.find((t) => t.id === teacherId);
+      if (added) {
+        setAssignments((prev) => ({
+          ...prev,
+          [subjectId]: [...(prev[subjectId] || []), added],
+        }));
+      }
       setSelectedTeacherIds((prev) => ({ ...prev, [subjectId]: "" }));
-      load();
     } catch (err: any) {
       const apiErr = err?.response?.data?.errors;
       setErrors(
@@ -103,7 +109,10 @@ export default function ClassGroupClassAssignmentsPage() {
       await api.delete(
         `/schools/${schoolId}/classgroups/${groupId}/subjects/${subjectId}/classassignments/${teacherId}`
       );
-      load();
+      setAssignments((prev) => ({
+        ...prev,
+        [subjectId]: (prev[subjectId] || []).filter((t) => t.id !== teacherId),
+      }));
     } catch {
       alert("Failed to remove assignment.");
     }
@@ -111,7 +120,9 @@ export default function ClassGroupClassAssignmentsPage() {
 
   return (
     <div>
-      <h5 className="mb-3">Class Assignments</h5>
+      <div className="d-flex justify-content-center align-items-center mb-3">
+        <h5 className="mb-0 text-center">Class Assignments</h5>
+      </div>
       <ValidationErrorList messages={errors} />
 
       {loading ? (
@@ -128,7 +139,14 @@ export default function ClassGroupClassAssignmentsPage() {
 
             return (
               <Accordion.Item eventKey={idx.toString()} key={subject.id}>
-                <Accordion.Header>{subject.name}</Accordion.Header>
+                <Accordion.Header>
+                  <span
+                    className="flex-grow-1 text-truncate me-4"
+                    style={{ minWidth: 0 }}
+                  >
+                    {subject.name}
+                  </span>
+                </Accordion.Header>
                 <Accordion.Body>
                   <div className="d-flex gap-2 mb-3">
                     <Form.Select

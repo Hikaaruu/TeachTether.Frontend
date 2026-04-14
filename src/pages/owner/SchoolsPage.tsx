@@ -132,6 +132,7 @@ export default function SchoolsPage() {
               className="list-group-item d-flex justify-content-between align-items-center"
             >
               <span
+                className="flex-grow-1 text-truncate me-4"
                 style={{ cursor: "pointer", textDecoration: "none" }}
                 onClick={() => navigate(`/owner/schools/${school.id}`)}
                 onMouseOver={(e) =>
@@ -144,9 +145,9 @@ export default function SchoolsPage() {
                 {school.name}
               </span>
 
-              <div>
+              <div className="d-flex gap-2 flex-shrink-0">
                 <button
-                  className="btn btn-sm btn-outline-primary me-2"
+                  className="btn btn-sm btn-outline-primary"
                   onClick={() => openEditModal(school)}
                 >
                   Edit
