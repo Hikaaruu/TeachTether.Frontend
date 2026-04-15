@@ -3,11 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { api } from "../../api/client";
 import ValidationErrorList from "../../components/ValidationErrorList";
 import ConfirmDeleteModal from "../../components/ConfirmDeleteModal";
-
-type School = {
-  id: number;
-  name: string;
-};
+import { extractApiErrors } from "../../utils/errors";
+import { School } from "../../types/models";
 
 export default function SchoolsPage() {
   const navigate = useNavigate();
@@ -63,7 +60,9 @@ export default function SchoolsPage() {
       setShowDeleteModal(false);
       setSchoolToDelete(null);
       loadSchools();
-    } catch {}
+    } catch {
+      setErrors(["Failed to delete school."]);
+    }
   };
 
   const handleCancelDelete = () => {
@@ -79,13 +78,8 @@ export default function SchoolsPage() {
       await api.post("/schools", { name: formName.trim() });
       setShowCreateModal(false);
       loadSchools();
-    } catch (err: any) {
-      const apiErrors = err?.response?.data?.errors;
-      setErrors(
-        apiErrors
-          ? (Object.values(apiErrors).flat() as string[])
-          : ["Failed to create school."]
-      );
+    } catch (err: unknown) {
+      setErrors(extractApiErrors(err, "Failed to create school."));
     } finally {
       setCreatingOrUpdating(false);
     }
@@ -99,13 +93,8 @@ export default function SchoolsPage() {
       await api.put(`/schools/${formId}`, { name: formName.trim() });
       setShowEditModal(false);
       loadSchools();
-    } catch (err: any) {
-      const apiErrors = err?.response?.data?.errors;
-      setErrors(
-        apiErrors
-          ? (Object.values(apiErrors).flat() as string[])
-          : ["Failed to update school."]
-      );
+    } catch (err: unknown) {
+      setErrors(extractApiErrors(err, "Failed to update school."));
     } finally {
       setCreatingOrUpdating(false);
     }
@@ -132,15 +121,9 @@ export default function SchoolsPage() {
               className="list-group-item d-flex justify-content-between align-items-center"
             >
               <span
-                className="flex-grow-1 text-truncate me-4"
-                style={{ cursor: "pointer", textDecoration: "none" }}
+                className="flex-grow-1 text-truncate me-4 hover-underline"
+                style={{ cursor: "pointer" }}
                 onClick={() => navigate(`/owner/schools/${school.id}`)}
-                onMouseOver={(e) =>
-                  (e.currentTarget.style.textDecoration = "underline")
-                }
-                onMouseOut={(e) =>
-                  (e.currentTarget.style.textDecoration = "none")
-                }
               >
                 {school.name}
               </span>

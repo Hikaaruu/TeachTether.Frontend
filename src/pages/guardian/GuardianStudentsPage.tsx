@@ -2,15 +2,8 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { api } from "../../api/client";
 import { useAuth } from "../../auth/AuthProvider";
-
-type Student = {
-  id: number;
-  user: {
-    firstName: string;
-    middleName?: string;
-    lastName: string;
-  };
-};
+import { Student } from "../../types/models";
+import { personName } from "../../utils/format";
 
 export default function GuardianStudentsPage() {
   const { user } = useAuth();
@@ -21,11 +14,6 @@ export default function GuardianStudentsPage() {
   const schoolId = user?.schoolId;
   const guardianId = user?.entityId;
 
-  const studentName = (s: Student) =>
-    [s.user.firstName, s.user.middleName, s.user.lastName]
-      .filter(Boolean)
-      .join(" ");
-
   useEffect(() => {
     const load = async () => {
       if (!schoolId || !guardianId) return;
@@ -33,7 +21,7 @@ export default function GuardianStudentsPage() {
       setLoading(true);
       try {
         const res = await api.get(
-          `/schools/${schoolId}/guardians/${guardianId}/students`
+          `/schools/${schoolId}/guardians/${guardianId}/students`,
         );
         setStudents(res.data);
       } catch {
@@ -65,16 +53,11 @@ export default function GuardianStudentsPage() {
             >
               <span
                 role="button"
-                style={{ cursor: "pointer", textDecoration: "none" }}
+                className="hover-underline"
+                style={{ cursor: "pointer" }}
                 onClick={() => navigate(`${s.id}/results`)}
-                onMouseOver={(e) =>
-                  (e.currentTarget.style.textDecoration = "underline")
-                }
-                onMouseOut={(e) =>
-                  (e.currentTarget.style.textDecoration = "none")
-                }
               >
-                {studentName(s)}
+                {personName(s.user)}
               </span>
             </li>
           ))}

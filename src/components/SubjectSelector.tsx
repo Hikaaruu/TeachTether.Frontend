@@ -1,7 +1,4 @@
-type Subject = {
-  id: number;
-  name: string;
-};
+import { Subject } from "../types/models";
 
 type Props = {
   subjects: Subject[];

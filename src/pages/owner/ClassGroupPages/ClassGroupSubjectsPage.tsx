@@ -3,12 +3,8 @@ import { useParams } from "react-router-dom";
 import { api } from "../../../api/client";
 import ValidationErrorList from "../../../components/ValidationErrorList";
 import ConfirmDeleteModal from "../../../components/ConfirmDeleteModal";
-
-type Subject = {
-  id: number;
-  name: string;
-  schoolId: number;
-};
+import { extractApiErrors } from "../../../utils/errors";
+import { Subject } from "../../../types/models";
 
 type ConfirmState = {
   title: string;
@@ -30,7 +26,7 @@ export default function ClassGroupSubjectsPage() {
     Promise.all([
       api.get<Subject[]>(`/schools/${schoolId}/subjects`),
       api.get<Subject[]>(
-        `/schools/${schoolId}/classgroups/${groupId}/subjects`
+        `/schools/${schoolId}/classgroups/${groupId}/subjects`,
       ),
     ])
       .then(([allRes, classRes]) => {
@@ -59,13 +55,8 @@ export default function ClassGroupSubjectsPage() {
         setClassSubjects((prev) => [...prev, added]);
       }
       setSelectedId("");
-    } catch (err: any) {
-      const apiErr = err?.response?.data?.errors;
-      setErrors(
-        apiErr && typeof apiErr === "object"
-          ? (Object.values(apiErr).flat() as string[])
-          : ["Failed to add subject."]
-      );
+    } catch (err: unknown) {
+      setErrors(extractApiErrors(err, "Failed to add subject."));
     }
   };
 
@@ -76,7 +67,7 @@ export default function ClassGroupSubjectsPage() {
         "Remove this subject from the class group? All existing records for this subject will also be deleted. This cannot be undone.",
       onConfirm: async () => {
         await api.delete(
-          `/schools/${schoolId}/classgroups/${groupId}/subjects/${subjectId}`
+          `/schools/${schoolId}/classgroups/${groupId}/subjects/${subjectId}`,
         );
         setClassSubjects((prev) => prev.filter((s) => s.id !== subjectId));
       },
@@ -89,7 +80,7 @@ export default function ClassGroupSubjectsPage() {
         "Delete every grade, attendance and behaviour record for this subject in this class group? This cannot be undone.",
       onConfirm: async () => {
         await api.delete(
-          `/schools/${schoolId}/StudentRecords/classgroups/${groupId}/subjects/${subjectId}`
+          `/schools/${schoolId}/StudentRecords/classgroups/${groupId}/subjects/${subjectId}`,
         );
       },
     });

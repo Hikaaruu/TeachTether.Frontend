@@ -1,14 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { api } from "../../api/client";
-
-type ClassGroup = {
-  id: number;
-  gradeYear: number;
-  section: string;
-  homeroomTeacherId: number;
-  schoolId: number;
-};
+import { ClassGroup } from "../../types/models";
 
 export default function TeacherClassGroupsPage() {
   const [classGroups, setClassGroups] = useState<ClassGroup[]>([]);
@@ -50,14 +43,9 @@ export default function TeacherClassGroupsPage() {
             >
               <span
                 role="button"
-                style={{ cursor: "pointer", textDecoration: "none" }}
+                className="hover-underline"
+                style={{ cursor: "pointer" }}
                 onClick={() => navigate(`${c.id}/students`)}
-                onMouseOver={(e) =>
-                  (e.currentTarget.style.textDecoration = "underline")
-                }
-                onMouseOut={(e) =>
-                  (e.currentTarget.style.textDecoration = "none")
-                }
               >
                 Grade {c.gradeYear}-{c.section}
               </span>

@@ -3,22 +3,9 @@ import { useParams } from "react-router-dom";
 import { api } from "../../api/client";
 import ValidationErrorList from "../../components/ValidationErrorList";
 import { useNavigate } from "react-router-dom";
-
-type Teacher = {
-  id: number;
-  user: {
-    firstName: string;
-    middleName?: string;
-    lastName: string;
-  };
-};
-
-type ClassGroup = {
-  id: number;
-  gradeYear: number;
-  section: string;
-  homeroomTeacherId: number;
-};
+import { extractApiErrors } from "../../utils/errors";
+import { Teacher, ClassGroup } from "../../types/models";
+import { personName } from "../../utils/format";
 
 type FormState = {
   id?: number;
@@ -89,21 +76,15 @@ export default function ClassGroupsPage() {
       setEditing(null);
       const res = await api.get(`/schools/${schoolId}/classgroups`);
       setClassGroups(res.data);
-    } catch (err: any) {
-      const apiErr = err?.response?.data?.errors;
-      setErrors(
-        apiErr && typeof apiErr === "object"
-          ? (Object.values(apiErr).flat() as string[])
-          : ["Failed to save class group."]
-      );
+    } catch (err: unknown) {
+      setErrors(extractApiErrors(err, "Failed to save class group."));
     }
   };
 
   const teacherLabel = (id: number) => {
     const t = teachers.find((t) => t.id === id);
     if (!t) return "Unknown";
-    const { firstName, middleName, lastName } = t.user;
-    return [firstName, middleName, lastName].filter(Boolean).join(" ");
+    return personName(t.user);
   };
 
   return (
@@ -112,7 +93,10 @@ export default function ClassGroupsPage() {
         <h5 className="mb-0">Class Groups</h5>
         <button
           className="btn btn-success"
-          onClick={() => (setFormOpen(true), openCreate())}
+          onClick={() => {
+            setFormOpen(true);
+            openCreate();
+          }}
         >
           + Create Group
         </button>
@@ -130,14 +114,9 @@ export default function ClassGroupsPage() {
               className="list-group-item d-flex justify-content-between align-items-center"
             >
               <span
-                style={{ cursor: "pointer", textDecoration: "none" }}
+                className="hover-underline"
+                style={{ cursor: "pointer" }}
                 onClick={() => navigate(`${c.id}`)}
-                onMouseOver={(e) =>
-                  (e.currentTarget.style.textDecoration = "underline")
-                }
-                onMouseOut={(e) =>
-                  (e.currentTarget.style.textDecoration = "none")
-                }
               >
                 Grade {c.gradeYear}-{c.section} (Homeroom:{" "}
                 {teacherLabel(c.homeroomTeacherId)})
@@ -146,7 +125,10 @@ export default function ClassGroupsPage() {
               <div className="d-flex gap-2 flex-shrink-0">
                 <button
                   className="btn btn-sm btn-outline-primary"
-                  onClick={() => (setFormOpen(true), openEdit(c))}
+                  onClick={() => {
+                    setFormOpen(true);
+                    openEdit(c);
+                  }}
                 >
                   Edit
                 </button>
@@ -174,7 +156,10 @@ export default function ClassGroupsPage() {
                   <button
                     type="button"
                     className="btn-close"
-                    onClick={() => (setFormOpen(false), setEditing(null))}
+                    onClick={() => {
+                      setFormOpen(false);
+                      setEditing(null);
+                    }}
                   />
                 </div>
                 <div className="modal-body">
@@ -235,7 +220,10 @@ export default function ClassGroupsPage() {
                   <button
                     type="button"
                     className="btn btn-secondary"
-                    onClick={() => (setFormOpen(false), setEditing(null))}
+                    onClick={() => {
+                      setFormOpen(false);
+                      setEditing(null);
+                    }}
                   >
                     Cancel
                   </button>

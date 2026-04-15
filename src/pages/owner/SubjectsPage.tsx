@@ -3,11 +3,8 @@ import { useParams } from "react-router-dom";
 import { api } from "../../api/client";
 import ValidationErrorList from "../../components/ValidationErrorList";
 import ConfirmDeleteModal from "../../components/ConfirmDeleteModal";
-
-type Subject = {
-  id: number;
-  name: string;
-};
+import { extractApiErrors } from "../../utils/errors";
+import { Subject } from "../../types/models";
 
 type FormState = {
   id?: number;
@@ -53,7 +50,7 @@ export default function SubjectsPage() {
       setShowDeleteModal(false);
       loadSubjects();
     } catch {
-      alert("Failed to delete subject. It may be in use.");
+      setErrors(["Failed to delete subject. It may be in use."]);
     }
   };
 
@@ -78,13 +75,8 @@ export default function SubjectsPage() {
       setFormOpen(false);
       setEditing(null);
       loadSubjects();
-    } catch (err: any) {
-      const apiErr = err?.response?.data?.errors;
-      setErrors(
-        apiErr && typeof apiErr === "object"
-          ? (Object.values(apiErr).flat() as string[])
-          : ["Failed to save subject."]
-      );
+    } catch (err: unknown) {
+      setErrors(extractApiErrors(err, "Failed to save subject."));
     } finally {
       setSubmitting(false);
     }
@@ -96,7 +88,10 @@ export default function SubjectsPage() {
         <h5 className="mb-0">Subjects</h5>
         <button
           className="btn btn-success"
-          onClick={() => (setFormOpen(true), openCreate())}
+          onClick={() => {
+            setFormOpen(true);
+            openCreate();
+          }}
         >
           + Create Subject
         </button>
@@ -122,7 +117,10 @@ export default function SubjectsPage() {
               <div className="d-flex gap-2 flex-shrink-0">
                 <button
                   className="btn btn-sm btn-outline-primary"
-                  onClick={() => (setFormOpen(true), openEdit(s))}
+                  onClick={() => {
+                    setFormOpen(true);
+                    openEdit(s);
+                  }}
                 >
                   Edit
                 </button>
@@ -153,7 +151,10 @@ export default function SubjectsPage() {
                   <button
                     type="button"
                     className="btn-close"
-                    onClick={() => (setFormOpen(false), setEditing(null))}
+                    onClick={() => {
+                      setFormOpen(false);
+                      setEditing(null);
+                    }}
                   />
                 </div>
                 <div className="modal-body">
@@ -177,7 +178,10 @@ export default function SubjectsPage() {
                   <button
                     type="button"
                     className="btn btn-secondary"
-                    onClick={() => (setFormOpen(false), setEditing(null))}
+                    onClick={() => {
+                      setFormOpen(false);
+                      setEditing(null);
+                    }}
                   >
                     Cancel
                   </button>

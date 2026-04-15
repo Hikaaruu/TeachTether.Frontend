@@ -6,10 +6,4 @@ export enum UserRole {
   Guardian = "Guardian",
 }
 
-export const ALL_ROLES: UserRole[] = [
-  UserRole.Owner,
-  UserRole.Admin,
-  UserRole.Teacher,
-  UserRole.Student,
-  UserRole.Guardian,
-];
+export const ALL_ROLES = Object.values(UserRole);

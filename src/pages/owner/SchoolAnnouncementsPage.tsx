@@ -2,14 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import dayjs from "dayjs";
 import { api } from "../../api/client";
-
-type Announcement = {
-  id: number;
-  teacherId: number;
-  title: string;
-  message: string;
-  createdAt: string;
-};
+import { Announcement } from "../../types/models";
 
 export default function SchoolAnnouncementsPage() {
   const { id: schoolId } = useParams();
@@ -24,9 +17,9 @@ export default function SchoolAnnouncementsPage() {
         setAnnouncements(
           [...res.data].sort(
             (a, b) =>
-              dayjs(b.createdAt).valueOf() - dayjs(a.createdAt).valueOf()
-          )
-        )
+              dayjs(b.createdAt).valueOf() - dayjs(a.createdAt).valueOf(),
+          ),
+        ),
       )
       .catch(() => setAnnouncements([]))
       .finally(() => setLoading(false));

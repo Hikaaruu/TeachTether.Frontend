@@ -1,14 +1,7 @@
 import { useEffect, useState } from "react";
 import { NavLink, Outlet, useParams } from "react-router-dom";
 import { api } from "../../api/client";
-
-type ClassGroup = {
-  id: number;
-  gradeYear: number;
-  section: string;
-  homeroomTeacherId: number;
-  schoolId: number;
-};
+import { ClassGroup } from "../../types/models";
 
 export default function ClassGroupDashboard() {
   const { id: schoolId, groupId } = useParams();

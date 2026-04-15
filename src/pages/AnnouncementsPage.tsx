@@ -4,20 +4,8 @@ import { useAuth } from "../auth/AuthProvider";
 import dayjs from "dayjs";
 import ValidationErrorList from "../components/ValidationErrorList";
 import ConfirmDeleteModal from "../components/ConfirmDeleteModal";
-
-type Announcement = {
-  id: number;
-  teacherId: number;
-  title: string;
-  message: string;
-  createdAt: string;
-};
-
-type ClassGroup = {
-  id: number;
-  gradeYear: number;
-  section: string;
-};
+import { extractApiErrors } from "../utils/errors";
+import { Announcement, ClassGroup } from "../types/models";
 
 type FormState = {
   id?: number;
@@ -72,8 +60,8 @@ export default function AnnouncementsPage() {
       const ann = await api.get<Announcement[]>("/announcements");
       setAnnouncements(
         [...ann.data].sort(
-          (a, b) => dayjs(b.createdAt).valueOf() - dayjs(a.createdAt).valueOf()
-        )
+          (a, b) => dayjs(b.createdAt).valueOf() - dayjs(a.createdAt).valueOf(),
+        ),
       );
 
       if (isTeacher) {
@@ -114,7 +102,7 @@ export default function AnnouncementsPage() {
       await api.delete(`/announcements/${deletingId}`);
       setAnnouncements((curr) => curr.filter((a) => a.id !== deletingId));
     } catch {
-      alert("Failed to delete announcement.");
+      setErrors(["Failed to delete announcement."]);
     } finally {
       setDeletingId(null);
     }
@@ -147,8 +135,8 @@ export default function AnnouncementsPage() {
             .map((a) => (a.id === updated.id ? updated : a))
             .sort(
               (a, b) =>
-                dayjs(b.createdAt).valueOf() - dayjs(a.createdAt).valueOf()
-            )
+                dayjs(b.createdAt).valueOf() - dayjs(a.createdAt).valueOf(),
+            ),
         );
       } else {
         const res = await api.post<Announcement>("/announcements", {
@@ -162,20 +150,15 @@ export default function AnnouncementsPage() {
         setAnnouncements((curr) =>
           [created, ...curr].sort(
             (a, b) =>
-              dayjs(b.createdAt).valueOf() - dayjs(a.createdAt).valueOf()
-          )
+              dayjs(b.createdAt).valueOf() - dayjs(a.createdAt).valueOf(),
+          ),
         );
       }
 
       setFormOpen(false);
       setEditing(null);
-    } catch (err: any) {
-      const apiErr = err?.response?.data?.errors;
-      setErrors(
-        apiErr && typeof apiErr === "object"
-          ? (Object.values(apiErr).flat() as string[])
-          : ["Failed to save announcement."]
-      );
+    } catch (err: unknown) {
+      setErrors(extractApiErrors(err, "Failed to save announcement."));
     } finally {
       setSubmitting(false);
     }
@@ -189,7 +172,10 @@ export default function AnnouncementsPage() {
         {isTeacher && (
           <button
             className="btn btn-success ms-2"
-            onClick={() => (setFormOpen(true), openCreate())}
+            onClick={() => {
+              setFormOpen(true);
+              openCreate();
+            }}
           >
             + Create
           </button>
@@ -219,7 +205,10 @@ export default function AnnouncementsPage() {
                 <div className="d-flex flex-column gap-1 align-items-end flex-shrink-0">
                   <button
                     className="btn btn-sm btn-outline-primary"
-                    onClick={() => (setFormOpen(true), openEdit(a))}
+                    onClick={() => {
+                      setFormOpen(true);
+                      openEdit(a);
+                    }}
                   >
                     Edit
                   </button>
@@ -260,7 +249,10 @@ export default function AnnouncementsPage() {
                   <button
                     className="btn-close"
                     type="button"
-                    onClick={() => (setFormOpen(false), setEditing(null))}
+                    onClick={() => {
+                      setFormOpen(false);
+                      setEditing(null);
+                    }}
                   />
                 </div>
 
@@ -301,7 +293,8 @@ export default function AnnouncementsPage() {
                           onChange={(e) =>
                             setEditing((f) => ({
                               ...f!,
-                              targetAudience: e.target.value as any,
+                              targetAudience: e.target
+                                .value as FormState["targetAudience"],
                             }))
                           }
                           required
@@ -331,7 +324,7 @@ export default function AnnouncementsPage() {
                                     ? {
                                         ...f!,
                                         classGroupIds: list.filter(
-                                          (x) => x !== id
+                                          (x) => x !== id,
                                         ),
                                       }
                                     : {
@@ -359,7 +352,10 @@ export default function AnnouncementsPage() {
                   <button
                     className="btn btn-secondary"
                     type="button"
-                    onClick={() => (setFormOpen(false), setEditing(null))}
+                    onClick={() => {
+                      setFormOpen(false);
+                      setEditing(null);
+                    }}
                   >
                     Cancel
                   </button>

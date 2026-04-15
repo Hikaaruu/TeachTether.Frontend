@@ -2,21 +2,8 @@ import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { api } from "../../api/client";
 import { useAuth } from "../../auth/AuthProvider";
-
-type Student = {
-  id: number;
-  user: {
-    firstName: string;
-    middleName?: string;
-    lastName: string;
-  };
-};
-
-type ClassGroup = {
-  id: number;
-  gradeYear: number;
-  section: string;
-};
+import { Student, ClassGroup } from "../../types/models";
+import { personName } from "../../utils/format";
 
 export default function TeacherClassGroupStudentsPage() {
   const { user } = useAuth();
@@ -27,11 +14,6 @@ export default function TeacherClassGroupStudentsPage() {
   const schoolId = user?.schoolId;
 
   const navigate = useNavigate();
-
-  const studentName = (s: Student) =>
-    [s.user.firstName, s.user.middleName, s.user.lastName]
-      .filter(Boolean)
-      .join(" ");
 
   useEffect(() => {
     const load = async () => {
@@ -79,16 +61,11 @@ export default function TeacherClassGroupStudentsPage() {
             >
               <span
                 role="button"
-                style={{ cursor: "pointer", textDecoration: "none" }}
+                className="hover-underline"
+                style={{ cursor: "pointer" }}
                 onClick={() => navigate(`${s.id}/results`)}
-                onMouseOver={(e) =>
-                  (e.currentTarget.style.textDecoration = "underline")
-                }
-                onMouseOut={(e) =>
-                  (e.currentTarget.style.textDecoration = "none")
-                }
               >
-                {studentName(s)}
+                {personName(s.user)}
               </span>
             </li>
           ))}

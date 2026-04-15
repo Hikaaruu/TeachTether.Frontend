@@ -13,3 +13,7 @@ a {
 button {
   font-family: inherit;
 }
+
+.hover-underline:hover {
+  text-decoration: underline !important;
+}

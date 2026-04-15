@@ -3,30 +3,10 @@ import { useNavigate } from "react-router-dom";
 import { api } from "../api/client";
 import { useAuth } from "../auth/AuthProvider";
 import ConfirmDeleteModal from "../components/ConfirmDeleteModal";
-
-type Thread = {
-  id: number;
-  teacherId: number;
-  guardianId: number;
-};
-
-type Teacher = {
-  id: number;
-  user: { firstName: string; middleName?: string; lastName: string };
-};
-
-type Guardian = {
-  id: number;
-  user: { firstName: string; middleName?: string; lastName: string };
-};
+import { Thread, Teacher, Guardian } from "../types/models";
+import { personName } from "../utils/format";
 
 type UserKind = "Teacher" | "Guardian";
-
-const fullName = (u: {
-  firstName: string;
-  middleName?: string;
-  lastName: string;
-}) => [u.firstName, u.middleName, u.lastName].filter(Boolean).join(" ");
 
 export default function MessageThreadsPage() {
   const { user } = useAuth();
@@ -69,13 +49,13 @@ export default function MessageThreadsPage() {
 
   const companionMap = useMemo(() => {
     const map = new Map<number, string>();
-    companions.forEach((c) => map.set(c.id, fullName(c.user)));
+    companions.forEach((c) => map.set(c.id, personName(c.user)));
     return map;
   }, [companions]);
 
   const available = useMemo(() => {
     const takenIds = new Set<number>(
-      threads.map((t) => (role === "Guardian" ? t.teacherId : t.guardianId))
+      threads.map((t) => (role === "Guardian" ? t.teacherId : t.guardianId)),
     );
     return companions.filter((c) => !takenIds.has(c.id));
   }, [companions, threads, role]);
@@ -163,14 +143,8 @@ export default function MessageThreadsPage() {
                 <li
                   key={t.id}
                   role="button"
-                  className="list-group-item d-flex justify-content-between align-items-center"
+                  className="list-group-item d-flex justify-content-between align-items-center hover-underline"
                   onClick={() => navigate(`${t.id}/messages`)}
-                  onMouseOver={(e) =>
-                    (e.currentTarget.style.textDecoration = "underline")
-                  }
-                  onMouseOut={(e) =>
-                    (e.currentTarget.style.textDecoration = "none")
-                  }
                 >
                   <span>
                     {compRole}: {compName}
@@ -219,7 +193,7 @@ export default function MessageThreadsPage() {
                       value={selectedId}
                       onChange={(e) =>
                         setSelectedId(
-                          e.target.value ? Number(e.target.value) : ""
+                          e.target.value ? Number(e.target.value) : "",
                         )
                       }
                     >
@@ -228,11 +202,11 @@ export default function MessageThreadsPage() {
                         <option
                           key={c.id}
                           value={c.id}
-                          title={fullName(c.user)}
+                          title={personName(c.user)}
                         >
-                          {fullName(c.user).length > 35
-                            ? fullName(c.user).slice(0, 35) + "…"
-                            : fullName(c.user)}
+                          {personName(c.user).length > 35
+                            ? personName(c.user).slice(0, 35) + "…"
+                            : personName(c.user)}
                         </option>
                       ))}
                     </select>

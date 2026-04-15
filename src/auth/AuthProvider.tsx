@@ -51,8 +51,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const login = async (creds: Credentials) => {
     const res = await api.post<{ token: string }>("/auth/login", creds);
     saveToken(res.data.token);
-    const me = await api.get<UserInfo>("/auth/me");
-    setUser(me.data);
+    try {
+      const me = await api.get<UserInfo>("/auth/me");
+      setUser(me.data);
+    } catch {
+      clearToken();
+      setUser(null);
+      throw new Error("Login succeeded but failed to fetch user profile.");
+    }
   };
 
   const logout = () => {

@@ -88,14 +88,7 @@ export default function Login() {
         <div className="text-center">
           <button
             type="button"
-            className="btn text-secondary"
-            style={{
-              textDecoration: "none",
-            }}
-            onMouseOver={(e) =>
-              (e.currentTarget.style.textDecoration = "underline")
-            }
-            onMouseOut={(e) => (e.currentTarget.style.textDecoration = "none")}
+            className="btn text-secondary hover-underline"
             onClick={() => navigate("/register")}
           >
             Don’t have an account? Register

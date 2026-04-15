@@ -4,7 +4,17 @@ import { useAuth } from "../auth/AuthProvider";
 export default function StartupRedirect() {
   const { user, ready } = useAuth();
 
-  if (!ready) return null;
+  if (!ready)
+    return (
+      <div
+        className="d-flex justify-content-center align-items-center"
+        style={{ height: "100vh" }}
+      >
+        <div className="spinner-border" role="status">
+          <span className="visually-hidden">Loading…</span>
+        </div>
+      </div>
+    );
 
   if (!user) return <Navigate to="/login" replace />;
 

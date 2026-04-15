@@ -4,28 +4,9 @@ import { api } from "../../api/client";
 import ValidationErrorList from "../../components/ValidationErrorList";
 import CredentialsModal from "../../components/CredentialsModal";
 import ConfirmDeleteModal from "../../components/ConfirmDeleteModal";
-
-type Guardian = {
-  id: number;
-  dateOfBirth: string;
-  user: {
-    firstName: string;
-    middleName?: string;
-    lastName: string;
-    sex: string;
-  };
-};
-
-type Student = {
-  id: number;
-  user: {
-    firstName: string;
-    middleName?: string;
-    lastName: string;
-  };
-  schoolId: number;
-  dateOfBirth: string;
-};
+import { extractApiErrors } from "../../utils/errors";
+import { Guardian, Student, CreatedCredentials } from "../../types/models";
+import { personName } from "../../utils/format";
 
 type FormState = {
   id?: number;
@@ -35,8 +16,6 @@ type FormState = {
   sex: "M" | "F";
   dateOfBirth: string;
 };
-
-type CreatedCredentials = { username: string; password: string };
 
 export default function GuardiansPage() {
   const { id: schoolId } = useParams();
@@ -57,7 +36,7 @@ export default function GuardiansPage() {
   const [creds, setCreds] = useState<CreatedCredentials | null>(null);
 
   const [guardianToDelete, setGuardianToDelete] = useState<Guardian | null>(
-    null
+    null,
   );
   const [showDeleteModal, setShowDeleteModal] = useState(false);
 
@@ -76,13 +55,13 @@ export default function GuardiansPage() {
         gRes.data.map(async (g) => {
           try {
             const res = await api.get<Student[]>(
-              `/schools/${schoolId}/guardians/${g.id}/students`
+              `/schools/${schoolId}/guardians/${g.id}/students`,
             );
             all[g.id] = res.data;
           } catch {
             all[g.id] = [];
           }
-        })
+        }),
       );
       setGuardianStudents(all);
     } catch {
@@ -109,11 +88,6 @@ export default function GuardiansPage() {
       dateOfBirth: g.dateOfBirth,
     });
 
-  const studentName = (s: Student) =>
-    [s.user.firstName, s.user.middleName, s.user.lastName]
-      .filter(Boolean)
-      .join(" ");
-
   const handleAddStudent = async (guardianId: number) => {
     const studentId = selectedStudentIds[guardianId];
     if (!studentId) return;
@@ -124,18 +98,18 @@ export default function GuardiansPage() {
       setSelectedStudentIds((prev) => ({ ...prev, [guardianId]: "" }));
       loadGuardians();
     } catch {
-      alert("Failed to assign student.");
+      setErrors(["Failed to assign student."]);
     }
   };
 
   const handleRemoveStudent = async (guardianId: number, studentId: number) => {
     try {
       await api.delete(
-        `/schools/${schoolId}/guardians/${guardianId}/students/${studentId}`
+        `/schools/${schoolId}/guardians/${guardianId}/students/${studentId}`,
       );
       loadGuardians();
     } catch {
-      alert("Failed to remove student.");
+      setErrors(["Failed to remove student."]);
     }
   };
 
@@ -152,7 +126,7 @@ export default function GuardiansPage() {
       setGuardianToDelete(null);
       loadGuardians();
     } catch {
-      alert("Failed to delete guardian.");
+      setErrors(["Failed to delete guardian."]);
     }
   };
 
@@ -189,13 +163,8 @@ export default function GuardiansPage() {
       setFormOpen(false);
       setEditing(null);
       loadGuardians();
-    } catch (err: any) {
-      const apiErr = err?.response?.data?.errors;
-      setErrors(
-        apiErr && typeof apiErr === "object"
-          ? (Object.values(apiErr).flat() as string[])
-          : ["Failed to save guardian."]
-      );
+    } catch (err: unknown) {
+      setErrors(extractApiErrors(err, "Failed to save guardian."));
     } finally {
       setSubmitting(false);
     }
@@ -207,7 +176,10 @@ export default function GuardiansPage() {
         <h5 className="mb-0">Guardians</h5>
         <button
           className="btn btn-success"
-          onClick={() => (setFormOpen(true), openCreate())}
+          onClick={() => {
+            setFormOpen(true);
+            openCreate();
+          }}
         >
           + Create Guardian
         </button>
@@ -226,12 +198,15 @@ export default function GuardiansPage() {
                   className="flex-grow-1 me-3 text-truncate"
                   style={{ minWidth: 0 }}
                 >
-                  {g.user.firstName} {g.user.middleName || ""} {g.user.lastName}
+                  {personName(g.user)}
                 </div>
                 <div className="d-flex gap-2 flex-shrink-0">
                   <button
                     className="btn btn-sm btn-outline-primary"
-                    onClick={() => (setFormOpen(true), openEdit(g))}
+                    onClick={() => {
+                      setFormOpen(true);
+                      openEdit(g);
+                    }}
                   >
                     Edit
                   </button>
@@ -260,11 +235,11 @@ export default function GuardiansPage() {
                     {allStudents
                       .filter(
                         (s) =>
-                          !guardianStudents[g.id]?.some((gs) => gs.id === s.id)
+                          !guardianStudents[g.id]?.some((gs) => gs.id === s.id),
                       )
                       .map((s) => (
                         <option key={s.id} value={s.id}>
-                          {studentName(s)}
+                          {personName(s.user)}
                         </option>
                       ))}
                   </select>
@@ -283,7 +258,7 @@ export default function GuardiansPage() {
                       key={s.id}
                       className="list-group-item d-flex justify-content-between align-items-center"
                     >
-                      {studentName(s)}
+                      {personName(s.user)}
                       <button
                         className="btn btn-sm btn-outline-danger"
                         onClick={() => handleRemoveStudent(g.id, s.id)}
@@ -314,7 +289,10 @@ export default function GuardiansPage() {
                   <button
                     type="button"
                     className="btn-close"
-                    onClick={() => (setFormOpen(false), setEditing(null))}
+                    onClick={() => {
+                      setFormOpen(false);
+                      setEditing(null);
+                    }}
                   />
                 </div>
                 <div className="modal-body">
@@ -328,7 +306,7 @@ export default function GuardiansPage() {
                       <input
                         className="form-control"
                         required={key !== "middleName"}
-                        value={(editing as any)[key] || ""}
+                        value={editing?.[key as keyof FormState] || ""}
                         onChange={(e) =>
                           setEditing((a) => ({
                             ...a!,
@@ -378,7 +356,10 @@ export default function GuardiansPage() {
                   <button
                     type="button"
                     className="btn btn-secondary"
-                    onClick={() => (setFormOpen(false), setEditing(null))}
+                    onClick={() => {
+                      setFormOpen(false);
+                      setEditing(null);
+                    }}
                   >
                     Cancel
                   </button>

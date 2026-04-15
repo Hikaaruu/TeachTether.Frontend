@@ -4,17 +4,9 @@ import { api } from "../../api/client";
 import ValidationErrorList from "../../components/ValidationErrorList";
 import CredentialsModal from "../../components/CredentialsModal";
 import ConfirmDeleteModal from "../../components/ConfirmDeleteModal";
-
-type Teacher = {
-  id: number;
-  dateOfBirth: string;
-  user: {
-    firstName: string;
-    middleName?: string;
-    lastName: string;
-    sex: string;
-  };
-};
+import { extractApiErrors } from "../../utils/errors";
+import { Teacher, CreatedCredentials } from "../../types/models";
+import { compareByPersonName } from "../../utils/format";
 
 type FormState = {
   id?: number;
@@ -23,11 +15,6 @@ type FormState = {
   lastName: string;
   sex: "M" | "F";
   dateOfBirth: string;
-};
-
-type CreatedCredentials = {
-  username: string;
-  password: string;
 };
 
 export default function TeachersPage() {
@@ -44,15 +31,11 @@ export default function TeachersPage() {
   const [teacherToDelete, setTeacherToDelete] = useState<Teacher | null>(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
 
-  const compareTeachers = (a: Teacher, b: Teacher) =>
-    a.user.lastName.localeCompare(b.user.lastName) ||
-    a.user.firstName.localeCompare(b.user.firstName);
-
   const loadTeachers = () => {
     setLoading(true);
     api
       .get<Teacher[]>(`/schools/${schoolId}/teachers`)
-      .then((r) => setTeachers(r.data.sort(compareTeachers)))
+      .then((r) => setTeachers(r.data.sort(compareByPersonName)))
       .catch(() => setTeachers([]))
       .finally(() => setLoading(false));
   };
@@ -86,7 +69,7 @@ export default function TeachersPage() {
       setDeleteError(null);
     } catch {
       setDeleteError(
-        `Failed to delete teacher "${teacherToDelete.user.firstName} ${teacherToDelete.user.lastName}". They are probably assigned as a homeroom teacher to a class group.`
+        `Failed to delete teacher "${teacherToDelete.user.firstName} ${teacherToDelete.user.lastName}". They are probably assigned as a homeroom teacher to a class group.`,
       );
     } finally {
       setShowDeleteModal(false);
@@ -105,14 +88,13 @@ export default function TeachersPage() {
     setSubmitting(true);
     setErrors([]);
 
+    const trimmedMiddleName = editing!.middleName?.trim() || undefined;
     const dto = {
       user: {
         firstName: editing!.firstName.trim(),
         lastName: editing!.lastName.trim(),
         sex: editing!.sex,
-        ...(editing!.middleName?.trim() && {
-          middleName: editing!.middleName.trim(),
-        }),
+        ...(trimmedMiddleName && { middleName: trimmedMiddleName }),
       },
       dateOfBirth: editing!.dateOfBirth,
     };
@@ -127,7 +109,7 @@ export default function TeachersPage() {
           user: {
             ...original.user,
             firstName: dto.user.firstName,
-            middleName: (dto.user as any).middleName,
+            middleName: trimmedMiddleName,
             lastName: dto.user.lastName,
             sex: dto.user.sex,
           },
@@ -137,7 +119,7 @@ export default function TeachersPage() {
         setTeachers((curr) =>
           curr
             .map((t) => (t.id === updated.id ? updated : t))
-            .sort(compareTeachers)
+            .sort(compareByPersonName),
         );
       } else {
         const res = await api.post<{
@@ -156,18 +138,13 @@ export default function TeachersPage() {
           dateOfBirth: res.data.dateOfBirth,
         };
 
-        setTeachers((curr) => [created, ...curr].sort(compareTeachers));
+        setTeachers((curr) => [created, ...curr].sort(compareByPersonName));
       }
 
       setFormOpen(false);
       setEditing(null);
-    } catch (err: any) {
-      const apiErr = err?.response?.data?.errors;
-      setErrors(
-        apiErr && typeof apiErr === "object"
-          ? (Object.values(apiErr).flat() as string[])
-          : ["Failed to save teacher."]
-      );
+    } catch (err: unknown) {
+      setErrors(extractApiErrors(err, "Failed to save teacher."));
     } finally {
       setSubmitting(false);
     }
@@ -179,7 +156,10 @@ export default function TeachersPage() {
         <h5 className="mb-0">Teachers</h5>
         <button
           className="btn btn-success"
-          onClick={() => (setFormOpen(true), openCreate())}
+          onClick={() => {
+            setFormOpen(true);
+            openCreate();
+          }}
         >
           + Create Teacher
         </button>
@@ -207,7 +187,10 @@ export default function TeachersPage() {
               <div className="d-flex gap-2 flex-shrink-0">
                 <button
                   className="btn btn-sm btn-outline-primary"
-                  onClick={() => (setFormOpen(true), openEdit(t))}
+                  onClick={() => {
+                    setFormOpen(true);
+                    openEdit(t);
+                  }}
                 >
                   Edit
                 </button>
@@ -238,7 +221,10 @@ export default function TeachersPage() {
                   <button
                     type="button"
                     className="btn-close"
-                    onClick={() => (setFormOpen(false), setEditing(null))}
+                    onClick={() => {
+                      setFormOpen(false);
+                      setEditing(null);
+                    }}
                   />
                 </div>
                 <div className="modal-body">
@@ -253,7 +239,7 @@ export default function TeachersPage() {
                         <input
                           className="form-control"
                           required={key !== "middleName"}
-                          value={(editing as any)[key] || ""}
+                          value={editing?.[key] || ""}
                           onChange={(e) =>
                             setEditing((a) => ({
                               ...a!,
@@ -305,7 +291,10 @@ export default function TeachersPage() {
                   <button
                     type="button"
                     className="btn btn-secondary"
-                    onClick={() => (setFormOpen(false), setEditing(null))}
+                    onClick={() => {
+                      setFormOpen(false);
+                      setEditing(null);
+                    }}
                   >
                     Cancel
                   </button>

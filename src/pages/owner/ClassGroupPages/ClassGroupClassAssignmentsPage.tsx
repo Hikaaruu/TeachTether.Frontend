@@ -5,23 +5,9 @@ import ValidationErrorList from "../../../components/ValidationErrorList";
 import Accordion from "react-bootstrap/Accordion";
 import Button from "react-bootstrap/Button";
 import Form from "react-bootstrap/Form";
-
-type Teacher = {
-  id: number;
-  user: {
-    firstName: string;
-    middleName?: string;
-    lastName: string;
-  };
-  schoolId: number;
-  dateOfBirth: string;
-};
-
-type Subject = {
-  id: number;
-  name: string;
-  schoolId: number;
-};
+import { extractApiErrors } from "../../../utils/errors";
+import { Teacher, Subject } from "../../../types/models";
+import { personName } from "../../../utils/format";
 
 export default function ClassGroupClassAssignmentsPage() {
   const { id: schoolId, groupId } = useParams();
@@ -39,7 +25,7 @@ export default function ClassGroupClassAssignmentsPage() {
     try {
       const [subjectRes, teacherRes] = await Promise.all([
         api.get<Subject[]>(
-          `/schools/${schoolId}/classgroups/${groupId}/subjects`
+          `/schools/${schoolId}/classgroups/${groupId}/subjects`,
         ),
         api.get<Teacher[]>(`/schools/${schoolId}/teachers`),
       ]);
@@ -47,15 +33,15 @@ export default function ClassGroupClassAssignmentsPage() {
       setSubjects(subjectRes.data);
       setTeachers(teacherRes.data);
 
-      const allAssignments: Record<number, Teacher[]> = {};
-      for (const subject of subjectRes.data) {
-        const res = await api.get<Teacher[]>(
-          `/schools/${schoolId}/classgroups/${groupId}/subjects/${subject.id}/classassignments`
-        );
-        allAssignments[subject.id] = res.data;
-      }
-
-      setAssignments(allAssignments);
+      const assignmentEntries = await Promise.all(
+        subjectRes.data.map(async (subject) => {
+          const res = await api.get<Teacher[]>(
+            `/schools/${schoolId}/classgroups/${groupId}/subjects/${subject.id}/classassignments`,
+          );
+          return [subject.id, res.data] as const;
+        }),
+      );
+      setAssignments(Object.fromEntries(assignmentEntries));
     } catch {
       setSubjects([]);
       setTeachers([]);
@@ -69,11 +55,6 @@ export default function ClassGroupClassAssignmentsPage() {
     void load();
   }, [schoolId, groupId]);
 
-  const teacherName = (t: Teacher) =>
-    [t.user.firstName, t.user.middleName, t.user.lastName]
-      .filter(Boolean)
-      .join(" ");
-
   const handleAdd = async (subjectId: number) => {
     setErrors([]);
     const teacherId = selectedTeacherIds[subjectId];
@@ -84,7 +65,7 @@ export default function ClassGroupClassAssignmentsPage() {
         `/schools/${schoolId}/classgroups/${groupId}/subjects/${subjectId}/classassignments`,
         {
           teacherId,
-        }
+        },
       );
       const added = teachers.find((t) => t.id === teacherId);
       if (added) {
@@ -94,27 +75,22 @@ export default function ClassGroupClassAssignmentsPage() {
         }));
       }
       setSelectedTeacherIds((prev) => ({ ...prev, [subjectId]: "" }));
-    } catch (err: any) {
-      const apiErr = err?.response?.data?.errors;
-      setErrors(
-        apiErr && typeof apiErr === "object"
-          ? (Object.values(apiErr).flat() as string[])
-          : ["Failed to assign teacher."]
-      );
+    } catch (err: unknown) {
+      setErrors(extractApiErrors(err, "Failed to assign teacher."));
     }
   };
 
   const handleDelete = async (subjectId: number, teacherId: number) => {
     try {
       await api.delete(
-        `/schools/${schoolId}/classgroups/${groupId}/subjects/${subjectId}/classassignments/${teacherId}`
+        `/schools/${schoolId}/classgroups/${groupId}/subjects/${subjectId}/classassignments/${teacherId}`,
       );
       setAssignments((prev) => ({
         ...prev,
         [subjectId]: (prev[subjectId] || []).filter((t) => t.id !== teacherId),
       }));
     } catch {
-      alert("Failed to remove assignment.");
+      setErrors(["Failed to remove assignment."]);
     }
   };
 
@@ -134,7 +110,7 @@ export default function ClassGroupClassAssignmentsPage() {
           {subjects.map((subject, idx) => {
             const assigned = assignments[subject.id] || [];
             const available = teachers.filter(
-              (t) => !assigned.some((a) => a.id === t.id)
+              (t) => !assigned.some((a) => a.id === t.id),
             );
 
             return (
@@ -161,7 +137,7 @@ export default function ClassGroupClassAssignmentsPage() {
                       <option value="">-- Select teacher --</option>
                       {available.map((t) => (
                         <option key={t.id} value={t.id}>
-                          {teacherName(t)}
+                          {personName(t.user)}
                         </option>
                       ))}
                     </Form.Select>
@@ -183,7 +159,7 @@ export default function ClassGroupClassAssignmentsPage() {
                           key={t.id}
                           className="list-group-item d-flex justify-content-between align-items-center"
                         >
-                          {teacherName(t)}
+                          {personName(t.user)}
                           <Button
                             size="sm"
                             variant="outline-danger"

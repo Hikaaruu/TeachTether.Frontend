@@ -1,12 +1,5 @@
-type Student = {
-  id: number;
-  user: {
-    firstName: string;
-    lastName: string;
-    middleName?: string;
-    sex: string;
-  };
-};
+import { Student } from "../types/models";
+import { personName } from "../utils/format";
 
 type Props = {
   students: Student[];
@@ -21,10 +14,6 @@ export default function StudentSelector({
 }: Props) {
   const shortName = (s: Student) =>
     [s.user.firstName, s.user.lastName].filter(Boolean).join(" ");
-  const fullName = (s: Student) =>
-    [s.user.firstName, s.user.middleName, s.user.lastName]
-      .filter(Boolean)
-      .join(" ");
 
   return (
     <div className="border-end pe-3">
@@ -49,7 +38,7 @@ export default function StudentSelector({
                 WebkitLineClamp: 2,
                 overflow: "hidden",
               }}
-              title={fullName(s)}
+              title={personName(s.user)}
             >
               {shortName(s)}
             </span>

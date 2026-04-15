@@ -4,16 +4,9 @@ import { api } from "../../api/client";
 import ValidationErrorList from "../../components/ValidationErrorList";
 import CredentialsModal from "../../components/CredentialsModal";
 import ConfirmDeleteModal from "../../components/ConfirmDeleteModal";
-
-type SchoolAdmin = {
-  id: number;
-  user: {
-    firstName: string;
-    middleName?: string;
-    lastName: string;
-    sex: string;
-  };
-};
+import { extractApiErrors } from "../../utils/errors";
+import { SchoolAdmin, CreatedCredentials } from "../../types/models";
+import { compareByPersonName } from "../../utils/format";
 
 type FormState = {
   id?: number;
@@ -21,11 +14,6 @@ type FormState = {
   middleName?: string;
   lastName: string;
   sex: "M" | "F";
-};
-
-type CreatedCredentials = {
-  username: string;
-  password: string;
 };
 
 export default function AdminsPage() {
@@ -42,17 +30,13 @@ export default function AdminsPage() {
   const [adminToDelete, setAdminToDelete] = useState<SchoolAdmin | null>(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
 
-  const compareAdmins = (a: SchoolAdmin, b: SchoolAdmin) =>
-    a.user.lastName.localeCompare(b.user.lastName) ||
-    a.user.firstName.localeCompare(b.user.firstName);
-
   const loadAdmins = async () => {
     setLoading(true);
     try {
       const res = await api.get<SchoolAdmin[]>(
-        `/schools/${schoolId}/schooladmins`
+        `/schools/${schoolId}/schooladmins`,
       );
-      setAdmins(res.data.sort(compareAdmins));
+      setAdmins(res.data.sort(compareByPersonName));
     } catch {
       setAdmins([]);
     } finally {
@@ -112,14 +96,13 @@ export default function AdminsPage() {
     setSubmitting(true);
     setValidationErrors([]);
 
+    const trimmedMiddleName = editingAdmin!.middleName?.trim() || undefined;
     const dto = {
       user: {
         firstName: editingAdmin!.firstName.trim(),
         lastName: editingAdmin!.lastName.trim(),
         sex: editingAdmin!.sex,
-        ...(editingAdmin!.middleName?.trim() && {
-          middleName: editingAdmin!.middleName.trim(),
-        }),
+        ...(trimmedMiddleName && { middleName: trimmedMiddleName }),
       },
     };
 
@@ -127,7 +110,7 @@ export default function AdminsPage() {
       if (editingAdmin?.id) {
         await api.put(
           `/schools/${schoolId}/schooladmins/${editingAdmin.id}`,
-          dto
+          dto,
         );
 
         const original = admins.find((a) => a.id === editingAdmin.id)!;
@@ -136,7 +119,7 @@ export default function AdminsPage() {
           user: {
             ...original.user,
             firstName: dto.user.firstName,
-            middleName: (dto.user as any).middleName,
+            middleName: trimmedMiddleName,
             lastName: dto.user.lastName,
             sex: dto.user.sex,
           },
@@ -145,7 +128,7 @@ export default function AdminsPage() {
         setAdmins((curr) =>
           curr
             .map((a) => (a.id === updated.id ? updated : a))
-            .sort(compareAdmins)
+            .sort(compareByPersonName),
         );
 
         setFormOpen(false);
@@ -167,16 +150,11 @@ export default function AdminsPage() {
           user: res.data.user,
         };
 
-        setAdmins((curr) => [created, ...curr].sort(compareAdmins));
+        setAdmins((curr) => [created, ...curr].sort(compareByPersonName));
         setFormOpen(false);
       }
-    } catch (err: any) {
-      const errors = err?.response?.data?.errors;
-      if (errors && typeof errors === "object") {
-        setValidationErrors(Object.values(errors).flat() as string[]);
-      } else {
-        setValidationErrors(["Failed to save admin."]);
-      }
+    } catch (err: unknown) {
+      setValidationErrors(extractApiErrors(err, "Failed to save admin."));
     } finally {
       setSubmitting(false);
     }

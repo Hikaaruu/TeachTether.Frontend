@@ -2,15 +2,9 @@ import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { api } from "../../../api/client";
 import ValidationErrorList from "../../../components/ValidationErrorList";
-
-type Student = {
-  id: number;
-  user: {
-    firstName: string;
-    middleName?: string;
-    lastName: string;
-  };
-};
+import { extractApiErrors } from "../../../utils/errors";
+import { Student } from "../../../types/models";
+import { personName } from "../../../utils/format";
 
 export default function ClassGroupStudentsPage() {
   const { id: schoolId, groupId } = useParams();
@@ -25,7 +19,7 @@ export default function ClassGroupStudentsPage() {
     Promise.all([
       api.get<Student[]>(`/schools/${schoolId}/students/without-class-group`),
       api.get<Student[]>(
-        `/schools/${schoolId}/classgroups/${groupId}/students`
+        `/schools/${schoolId}/classgroups/${groupId}/students`,
       ),
     ])
       .then(([unassignedRes, classRes]) => {
@@ -55,20 +49,15 @@ export default function ClassGroupStudentsPage() {
         setAvailableStudents((prev) => prev.filter((s) => s.id !== selectedId));
       }
       setSelectedId("");
-    } catch (err: any) {
-      const apiErr = err?.response?.data?.errors;
-      setErrors(
-        apiErr && typeof apiErr === "object"
-          ? (Object.values(apiErr).flat() as string[])
-          : ["Failed to add student."]
-      );
+    } catch (err: unknown) {
+      setErrors(extractApiErrors(err, "Failed to add student."));
     }
   };
 
   const handleDelete = async (studentId: number) => {
     try {
       await api.delete(
-        `/schools/${schoolId}/classgroups/${groupId}/students/${studentId}`
+        `/schools/${schoolId}/classgroups/${groupId}/students/${studentId}`,
       );
       const removed = classStudents.find((s) => s.id === studentId);
       if (removed) {
@@ -76,14 +65,9 @@ export default function ClassGroupStudentsPage() {
       }
       setClassStudents((prev) => prev.filter((s) => s.id !== studentId));
     } catch {
-      alert("Failed to remove student.");
+      setErrors(["Failed to remove student."]);
     }
   };
-
-  const studentName = (s: Student) =>
-    [s.user.firstName, s.user.middleName, s.user.lastName]
-      .filter(Boolean)
-      .join(" ");
 
   return (
     <div>
@@ -100,7 +84,7 @@ export default function ClassGroupStudentsPage() {
           <option value="">-- Select student to add --</option>
           {availableStudents.map((s) => (
             <option key={s.id} value={s.id}>
-              {studentName(s)}
+              {personName(s.user)}
             </option>
           ))}
         </select>
@@ -126,7 +110,7 @@ export default function ClassGroupStudentsPage() {
               key={s.id}
               className="list-group-item d-flex justify-content-between align-items-center"
             >
-              <div>{studentName(s)}</div>
+              <div>{personName(s.user)}</div>
               <button
                 className="btn btn-sm btn-outline-danger"
                 onClick={() => handleDelete(s.id)}

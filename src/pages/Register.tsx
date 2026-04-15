@@ -4,6 +4,7 @@ import { api } from "../api/client";
 import { useAuth } from "../auth/AuthProvider";
 import { useState } from "react";
 import ValidationErrorList from "../components/ValidationErrorList";
+import { extractApiErrors } from "../utils/errors";
 
 type RegisterForm = {
   userName: string;
@@ -38,14 +39,10 @@ export default function Register() {
       await api.post("/auth/register", dto);
       await login({ username: data.userName, password: data.password });
       navigate("/");
-    } catch (err: any) {
-      const apiErrors = err?.response?.data?.errors;
-      if (apiErrors && typeof apiErrors === "object") {
-        const allMessages = Object.values(apiErrors).flat() as string[];
-        setValidationErrors(allMessages);
-      } else {
-        setValidationErrors(["Registration failed. Please try again."]);
-      }
+    } catch (err: unknown) {
+      setValidationErrors(
+        extractApiErrors(err, "Registration failed. Please try again."),
+      );
     }
   };
 
@@ -177,12 +174,7 @@ export default function Register() {
         <div className="text-center mt-3">
           <button
             type="button"
-            className="btn text-secondary"
-            style={{ textDecoration: "none" }}
-            onMouseOver={(e) =>
-              (e.currentTarget.style.textDecoration = "underline")
-            }
-            onMouseOut={(e) => (e.currentTarget.style.textDecoration = "none")}
+            className="btn text-secondary hover-underline"
             onClick={() => navigate("/login")}
           >
             Already have an account? Sign in
